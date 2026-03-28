@@ -54,7 +54,11 @@ final class APIClient: Sendable {
     // MARK: - Chat
 
     func chat(message: String) async throws -> [String: Any] {
-        try await post("/chat", body: ["message": message])
+        try await post("/chat", body: ["content": message])
+    }
+
+    func chatHistory() async throws -> [String: Any] {
+        try await get("/chat/history")
     }
 
     // MARK: - Activities
