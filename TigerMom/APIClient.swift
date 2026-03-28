@@ -67,6 +67,14 @@ final class APIClient: Sendable {
         try await get("/activities")
     }
 
+    func getActivities(page: Int, limit: Int, category: String? = nil) async throws -> [String: Any] {
+        var path = "/activities?page=\(page)&limit=\(limit)"
+        if let category {
+            path += "&category=\(category)"
+        }
+        return try await get(path)
+    }
+
     // MARK: - Analytics
 
     func analyticsDaily() async throws -> [String: Any] {
