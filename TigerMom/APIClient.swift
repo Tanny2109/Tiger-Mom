@@ -105,6 +105,20 @@ final class APIClient: Sendable {
         try await get("/models/available")
     }
 
+    // MARK: - Settings extras
+
+    func testApiKey(key: String) async throws -> [String: Any] {
+        try await post("/settings/test-key", body: ["api_key": key])
+    }
+
+    func clearData() async throws -> [String: Any] {
+        try await post("/settings/clear-data")
+    }
+
+    func exportData() async throws -> [String: Any] {
+        try await get("/settings/export")
+    }
+
     // MARK: - Private
 
     private func get(_ path: String) async throws -> [String: Any] {
