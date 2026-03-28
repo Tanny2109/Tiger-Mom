@@ -6,9 +6,12 @@ struct TigerMomApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .frame(minWidth: 800, minHeight: 600)
-                .background(Color(hex: 0x07070A))
+            ContentView(
+                appState: appDelegate.appState,
+                screenCapture: appDelegate.screenCapture
+            )
+            .frame(minWidth: 800, minHeight: 600)
+            .background(Color(hex: 0x07070A))
         }
         .defaultSize(width: 1000, height: 700)
         .windowStyle(.titleBar)

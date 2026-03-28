@@ -1,12 +1,12 @@
 import SwiftUI
 
 struct ContentView: View {
-    var body: some View {
-        let appDelegate = NSApp.delegate as! AppDelegate
-        let appState = appDelegate.appState
+    @Bindable var appState: AppState
+    let screenCapture: ScreenCapture
 
+    var body: some View {
         HStack(spacing: 0) {
-            SidebarView(appState: appState, screenCapture: appDelegate.screenCapture)
+            SidebarView(appState: appState)
                 .frame(width: 200)
 
             Rectangle()
@@ -16,7 +16,7 @@ struct ContentView: View {
             Group {
                 switch appState.selectedTab {
                 case .dashboard:
-                    DashboardView(appState: appState, screenCapture: appDelegate.screenCapture)
+                    DashboardView(appState: appState, screenCapture: screenCapture)
                 case .chat:
                     ChatView()
                 case .activity:
@@ -35,7 +35,6 @@ struct ContentView: View {
 
 struct SidebarView: View {
     @Bindable var appState: AppState
-    let screenCapture: ScreenCapture
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -164,8 +163,4 @@ extension Color {
             opacity: alpha
         )
     }
-}
-
-#Preview {
-    ContentView()
 }
