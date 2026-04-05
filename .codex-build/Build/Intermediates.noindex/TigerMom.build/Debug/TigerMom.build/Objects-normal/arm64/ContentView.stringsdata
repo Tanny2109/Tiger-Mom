@@ -1,0 +1,56 @@
+{
+  "source": "/Users/tanmay/Projects/TigerMom/TigerMom/ContentView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 82
+        }
+      },
+      {
+        "comment": "",
+        "key": "Today’s posture",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 88
+        }
+      },
+      {
+        "comment": "",
+        "key": "Navigate",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 126
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld captures today",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 217
+        }
+      },
+      {
+        "comment": "",
+        "key": "Paused for idle time",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 207
+        }
+      },
+      {
+        "comment": "",
+        "key": "Session pulse",
+        "location": {
+          "startingColumn": 69,
+          "startingLine": 207
+        }
+      }
+    ]
+  },
+  "version": 1
+}

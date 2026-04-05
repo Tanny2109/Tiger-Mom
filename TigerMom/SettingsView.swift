@@ -1,19 +1,14 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-// MARK: - Settings View
-
 struct SettingsView: View {
-    // API
     @State private var apiKey = ""
     @State private var apiKeyStatus: ApiKeyStatus = .untested
 
-    // Models
     @State private var availableModels: [ModelInfo] = []
     @State private var visionModel = ""
     @State private var brainModel = ""
 
-    // Tracking
     @State private var screenshotInterval: Double = 120
     @State private var distractionThreshold: Double = 15
     @State private var nudgeCooldown: Double = 30
@@ -22,15 +17,12 @@ struct SettingsView: View {
     @State private var trackOutsideHours = false
     @State private var pauseWhenIdle = true
 
-    // Personality
     @State private var intensity = "medium"
     @State private var enableNudgeSounds = true
 
-    // Data
     @State private var storeScreenshots = true
     @State private var showClearConfirmation = false
 
-    // App Behavior
     @State private var launchAtLogin = false
     @State private var showInDock = true
     @State private var startTrackingOnLaunch = false
@@ -40,66 +32,86 @@ struct SettingsView: View {
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
             VStack(spacing: 20) {
-                // Header
-                HStack {
-                    Text("Settings")
-                        .font(.system(size: 22, weight: .bold))
-                        .foregroundColor(.white)
-                    Spacer()
-                }
-                .padding(.bottom, 4)
+                header
 
-                apiConfigSection
-                modelSelectionSection
-                trackingSection
-                personalitySection
-                dataPrivacySection
-                appBehaviorSection
-                aboutSection
+                HStack(alignment: .top, spacing: 20) {
+                    VStack(spacing: 20) {
+                        apiConfigSection
+                        modelSelectionSection
+                        personalitySection
+                    }
+                    .frame(maxWidth: .infinity)
+
+                    VStack(spacing: 20) {
+                        trackingSection
+                        dataPrivacySection
+                        appBehaviorSection
+                        aboutSection
+                    }
+                    .frame(maxWidth: .infinity)
+                }
             }
-            .padding(.horizontal, 28)
-            .padding(.top, 28)
-            .padding(.bottom, 32)
+            .padding(24)
         }
-        .background(Color(hex: 0x07070A))
         .task {
             await loadSettings()
             await loadModels()
         }
     }
 
-    // MARK: - 1. API Configuration
+    private var header: some View {
+        TigerPanel(padding: 24, cornerRadius: 28, emphasis: 1.08) {
+            HStack(alignment: .top, spacing: 18) {
+                TigerSectionHeader(
+                    eyebrow: "Configuration",
+                    title: "Settings",
+                    detail: "Tune models, timing, tone, and privacy without leaving the app."
+                )
+
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: 10) {
+                    TigerCapsuleBadge(title: isSaving ? "Saving" : "Live Sync", symbol: isSaving ? "arrow.triangle.2.circlepath" : "checkmark.circle.fill", tint: isSaving ? TigerPalette.gold : TigerPalette.jade)
+                    Text("Changes sync to the sidecar as you go.")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(TigerPalette.textSecondary)
+                }
+            }
+        }
+    }
 
     private var apiConfigSection: some View {
-        SettingsSection(title: "API Configuration", icon: "key.fill") {
-            VStack(alignment: .leading, spacing: 12) {
-                Text("OpenRouter API Key")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.white.opacity(0.5))
+        SettingsCard(title: "API Credentials", icon: "key.horizontal.fill", detail: "Connect the app to your model layer.") {
+            VStack(alignment: .leading, spacing: 14) {
+                SettingsLabel("OpenRouter API Key")
 
-                HStack(spacing: 8) {
+                HStack(spacing: 10) {
                     SecureField("sk-or-...", text: $apiKey)
                         .textFieldStyle(.plain)
-                        .font(.system(size: 13, design: .monospaced))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 8)
-                        .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.05)))
-                        .onChange(of: apiKey) {
-                            apiKeyStatus = .untested
-                        }
+                        .font(.system(size: 13, weight: .medium, design: .monospaced))
+                        .foregroundColor(TigerPalette.textPrimary)
+                        .tigerInsetField()
+                        .onChange(of: apiKey) { apiKeyStatus = .untested }
 
                     Button {
                         Task { await testApiKey() }
                     } label: {
-                        HStack(spacing: 4) {
+                        HStack(spacing: 6) {
                             statusIcon
-                            Text("Test")
-                                .font(.system(size: 12, weight: .medium))
+                            Text("Test Key")
+                                .font(.system(size: 12, weight: .semibold, design: .rounded))
                         }
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 7)
-                        .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.06)))
+                        .foregroundColor(TigerPalette.textPrimary)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 11)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .fill(Color.white.opacity(0.05))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                        .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
+                                )
+                        )
                     }
                     .buttonStyle(.plain)
                 }
@@ -107,13 +119,9 @@ struct SettingsView: View {
                 Button {
                     NSWorkspace.shared.open(URL(string: "https://openrouter.ai/keys")!)
                 } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "arrow.up.right.square")
-                            .font(.system(size: 11))
-                        Text("Get API Key")
-                            .font(.system(size: 12))
-                    }
-                    .foregroundColor(Color(hex: 0xF59E0B).opacity(0.7))
+                    Label("Open key manager", systemImage: "arrow.up.right.square.fill")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundColor(TigerPalette.gold)
                 }
                 .buttonStyle(.plain)
             }
@@ -125,56 +133,37 @@ struct SettingsView: View {
         switch apiKeyStatus {
         case .untested:
             Image(systemName: "questionmark.circle")
-                .foregroundColor(.white.opacity(0.3))
-                .font(.system(size: 12))
+                .foregroundColor(TigerPalette.textMuted)
         case .testing:
             ProgressView()
-                .scaleEffect(0.5)
-                .frame(width: 14, height: 14)
+                .scaleEffect(0.55)
         case .valid:
             Image(systemName: "checkmark.circle.fill")
-                .foregroundColor(.green)
-                .font(.system(size: 12))
+                .foregroundColor(TigerPalette.jade)
         case .invalid:
             Image(systemName: "xmark.circle.fill")
-                .foregroundColor(.red)
-                .font(.system(size: 12))
+                .foregroundColor(TigerPalette.coral)
         }
     }
 
-    // MARK: - 2. Model Selection
-
     private var modelSelectionSection: some View {
-        SettingsSection(title: "Model Selection", icon: "cpu") {
-            VStack(alignment: .leading, spacing: 12) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Vision Model")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.white.opacity(0.5))
-                    ModelPicker(selection: $visionModel, models: availableModels, onChange: saveSettings)
-                }
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Brain Model")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.white.opacity(0.5))
-                    ModelPicker(selection: $brainModel, models: availableModels, onChange: saveSettings)
-                }
+        SettingsCard(title: "Models", icon: "cpu.fill", detail: "Choose the visual and conversational engines.") {
+            VStack(spacing: 14) {
+                SettingsPickerBlock(title: "Vision Model", selection: $visionModel, models: availableModels, onChange: saveSettings)
+                SettingsPickerBlock(title: "Brain Model", selection: $brainModel, models: availableModels, onChange: saveSettings)
             }
         }
     }
 
-    // MARK: - 3. Tracking
-
     private var trackingSection: some View {
-        SettingsSection(title: "Tracking", icon: "camera.viewfinder") {
-            VStack(spacing: 14) {
+        SettingsCard(title: "Tracking", icon: "camera.aperture", detail: "Control cadence, thresholds, and working hours.") {
+            VStack(spacing: 16) {
                 SettingsSlider(
                     label: "Screenshot interval",
                     value: $screenshotInterval,
                     range: 60...300,
                     step: 10,
-                    format: { "\(Int($0))s" },
+                    format: { "\(Int($0)) sec" },
                     onChange: saveSettings
                 )
 
@@ -196,25 +185,11 @@ struct SettingsView: View {
                     onChange: saveSettings
                 )
 
-                Divider().opacity(0.1)
+                TigerDivider()
 
-                HStack(spacing: 12) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Work hours start")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.white.opacity(0.5))
-                        DatePicker("", selection: $workStart, displayedComponents: .hourAndMinute)
-                            .labelsHidden()
-                            .onChange(of: workStart) { saveSettings() }
-                    }
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Work hours end")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.white.opacity(0.5))
-                        DatePicker("", selection: $workEnd, displayedComponents: .hourAndMinute)
-                            .labelsHidden()
-                            .onChange(of: workEnd) { saveSettings() }
-                    }
+                HStack(spacing: 14) {
+                    SettingsTimeField(title: "Work starts", selection: $workStart, onChange: saveSettings)
+                    SettingsTimeField(title: "Work ends", selection: $workEnd, onChange: saveSettings)
                 }
 
                 SettingsToggle(label: "Track outside work hours", isOn: $trackOutsideHours, onChange: saveSettings)
@@ -223,14 +198,10 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - 4. Personality
-
     private var personalitySection: some View {
-        SettingsSection(title: "Tiger Mom Personality", icon: "theatermask.and.paintbrush") {
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Intensity")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.white.opacity(0.5))
+        SettingsCard(title: "Tiger Mom Voice", icon: "theatermasks.fill", detail: "Adjust the emotional temperature of the coaching.") {
+            VStack(alignment: .leading, spacing: 14) {
+                SettingsLabel("Intensity")
 
                 Picker("", selection: $intensity) {
                     Text("Gentle").tag("gentle")
@@ -240,14 +211,20 @@ struct SettingsView: View {
                 .pickerStyle(.segmented)
                 .onChange(of: intensity) { saveSettings() }
 
-                // Preview
                 Text(intensityPreview)
-                    .font(.system(size: 12, design: .serif))
-                    .italic()
-                    .foregroundColor(.white.opacity(0.4))
-                    .padding(10)
+                    .font(.system(size: 13, weight: .medium, design: .serif))
+                    .foregroundColor(TigerPalette.textPrimary)
+                    .lineSpacing(4)
+                    .padding(14)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.03)))
+                    .background(
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .fill(Color.white.opacity(0.04))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                    .strokeBorder(Color.white.opacity(0.05), lineWidth: 1)
+                            )
+                    )
 
                 SettingsToggle(label: "Enable nudge sounds", isOn: $enableNudgeSounds, onChange: saveSettings)
             }
@@ -256,89 +233,67 @@ struct SettingsView: View {
 
     private var intensityPreview: String {
         switch intensity {
-        case "gentle": return "\"Hey, you've been on Reddit for a bit. Maybe take a break? 💛\""
-        case "fierce": return "\"25 MINUTES on Reddit?! Do you think success comes from scrolling?! GET BACK TO WORK. 🐯\""
-        default: return "\"You've spent 25 min on Reddit. Tiger Mom is not impressed. Time to refocus. 🐯\""
+        case "gentle": return "“Hey, you’ve been drifting a little. Let’s tighten the next block and make it count.”"
+        case "fierce": return "“Twenty-five minutes on Reddit? Explain yourself later. Close it now and return to work.”"
+        default: return "“You’re not doomed, but this day could be sharper. Reset and give me one clean hour.”"
         }
     }
 
-    // MARK: - 5. Data & Privacy
-
     private var dataPrivacySection: some View {
-        SettingsSection(title: "Data & Privacy", icon: "lock.shield") {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(spacing: 8) {
+        SettingsCard(title: "Data & Privacy", icon: "lock.shield.fill", detail: "Local-first controls for what gets stored and exported.") {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(spacing: 10) {
                     Image(systemName: "checkmark.shield.fill")
-                        .foregroundColor(.green.opacity(0.6))
-                        .font(.system(size: 14))
-                    Text("All data is stored locally on your Mac")
-                        .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.5))
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(TigerPalette.jade)
+
+                    Text("All activity data stays on your Mac unless a model call needs it.")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(TigerPalette.textSecondary)
                 }
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Screenshots stored at:")
-                        .font(.system(size: 11))
-                        .foregroundColor(.white.opacity(0.3))
-                    Text("~/projects/tiger-eye/screenshots/")
-                        .font(.system(size: 11, design: .monospaced))
-                        .foregroundColor(.white.opacity(0.4))
+                VStack(alignment: .leading, spacing: 4) {
+                    SettingsLabel("Screenshot storage path")
+                    Text("/Users/tanmay/Projects/TigerMom/screenshots")
+                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        .foregroundColor(TigerPalette.textSecondary)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(
+                            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                .fill(Color.white.opacity(0.04))
+                        )
                 }
 
                 SettingsToggle(label: "Store screenshots", isOn: $storeScreenshots, onChange: saveSettings)
 
-                Divider().opacity(0.1)
+                TigerDivider()
 
-                HStack(spacing: 12) {
-                    Button {
+                HStack(spacing: 10) {
+                    destructiveButton(title: "Clear All Data", symbol: "trash.fill") {
                         showClearConfirmation = true
-                    } label: {
-                        HStack(spacing: 5) {
-                            Image(systemName: "trash")
-                                .font(.system(size: 11))
-                            Text("Clear All Data")
-                                .font(.system(size: 12, weight: .medium))
-                        }
-                        .foregroundColor(.red.opacity(0.8))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 7)
-                        .background(RoundedRectangle(cornerRadius: 8).fill(Color.red.opacity(0.08)))
                     }
-                    .buttonStyle(.plain)
                     .alert("Clear All Data?", isPresented: $showClearConfirmation) {
                         Button("Cancel", role: .cancel) {}
                         Button("Clear", role: .destructive) {
                             Task { await clearData() }
                         }
                     } message: {
-                        Text("This will delete all activities, screenshots, and chat history. This cannot be undone.")
+                        Text("This will delete activities, screenshots, nudges, and chat history.")
                     }
 
-                    Button {
+                    neutralButton(title: "Export JSON", symbol: "square.and.arrow.up.fill") {
                         Task { await exportData() }
-                    } label: {
-                        HStack(spacing: 5) {
-                            Image(systemName: "square.and.arrow.up")
-                                .font(.system(size: 11))
-                            Text("Export JSON")
-                                .font(.system(size: 12, weight: .medium))
-                        }
-                        .foregroundColor(.white.opacity(0.5))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 7)
-                        .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.05)))
                     }
-                    .buttonStyle(.plain)
                 }
             }
         }
     }
 
-    // MARK: - 6. App Behavior
-
     private var appBehaviorSection: some View {
-        SettingsSection(title: "App Behavior", icon: "gearshape.2") {
-            VStack(spacing: 10) {
+        SettingsCard(title: "App Behavior", icon: "switch.2", detail: "How the app fits into your desktop routine.") {
+            VStack(spacing: 12) {
                 SettingsToggle(label: "Launch at login", isOn: $launchAtLogin, onChange: saveSettings)
                 SettingsToggle(label: "Show in Dock", isOn: $showInDock, onChange: saveSettings)
                 SettingsToggle(label: "Start tracking on launch", isOn: $startTrackingOnLaunch, onChange: saveSettings)
@@ -346,30 +301,64 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - 7. About
-
     private var aboutSection: some View {
-        SettingsSection(title: "About", icon: "info.circle") {
+        SettingsCard(title: "About", icon: "seal.fill", detail: "A polished local companion for focus and accountability.") {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Text("Tiger Mom")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.7))
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .foregroundColor(TigerPalette.textPrimary)
                     Spacer()
                     Text("v1.0.0")
-                        .font(.system(size: 12, design: .monospaced))
-                        .foregroundColor(.white.opacity(0.3))
+                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                        .foregroundColor(TigerPalette.textMuted)
                 }
 
-                Text("An AI-powered productivity monitor that watches your screen and gives you real-time coaching — like having a Tiger Mom looking over your shoulder.")
-                    .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.35))
-                    .lineSpacing(3)
+                Text("An AI-powered productivity monitor that watches your screen, interprets your behavior, and gives you sharp, contextual coaching in real time.")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(TigerPalette.textSecondary)
+                    .lineSpacing(4)
             }
         }
     }
 
-    // MARK: - Data Loading
+    private func destructiveButton(title: String, symbol: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: symbol)
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .foregroundColor(TigerPalette.coral)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 11)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(TigerPalette.coral.opacity(0.12))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .strokeBorder(TigerPalette.coral.opacity(0.18), lineWidth: 1)
+                        )
+                )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func neutralButton(title: String, symbol: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: symbol)
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .foregroundColor(TigerPalette.textPrimary)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 11)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(Color.white.opacity(0.05))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
+                        )
+                )
+        }
+        .buttonStyle(.plain)
+    }
 
     private func loadSettings() async {
         do {
@@ -395,30 +384,26 @@ struct SettingsView: View {
             if let endHour = s["work_end_hour"] as? Int {
                 workEnd = Self.defaultTime(hour: endHour)
             }
-        } catch {
-            // Use defaults
-        }
+        } catch {}
     }
 
     private func loadModels() async {
         do {
             let response = try await APIClient.shared.availableModels()
             if let models = response["models"] as? [[String: Any]] {
-                availableModels = models.compactMap { m in
-                    guard let id = m["id"] as? String,
-                          let name = m["name"] as? String else { return nil }
-                    let price = m["price"] as? String ?? ""
-                    return ModelInfo(id: id, name: name, price: price)
+                availableModels = models.compactMap { model in
+                    guard let id = model["id"] as? String,
+                          let name = model["name"] as? String else { return nil }
+                    return ModelInfo(id: id, name: name, price: model["price"] as? String ?? "")
                 }
             }
-        } catch {
-            // No models available
-        }
+        } catch {}
     }
 
     private func saveSettings() {
         guard !isSaving else { return }
         isSaving = true
+
         Task {
             let startHour = Calendar.current.component(.hour, from: workStart)
             let endHour = Calendar.current.component(.hour, from: workEnd)
@@ -449,8 +434,7 @@ struct SettingsView: View {
         apiKeyStatus = .testing
         do {
             let response = try await APIClient.shared.testApiKey(key: apiKey)
-            let valid = response["valid"] as? Bool ?? false
-            apiKeyStatus = valid ? .valid : .invalid
+            apiKeyStatus = (response["valid"] as? Bool ?? false) ? .valid : .invalid
         } catch {
             apiKeyStatus = .invalid
         }
@@ -471,17 +455,13 @@ struct SettingsView: View {
                     try jsonData.write(to: url)
                 }
             }
-        } catch {
-            // Export failed
-        }
+        } catch {}
     }
 
     static func defaultTime(hour: Int) -> Date {
         Calendar.current.date(from: DateComponents(hour: hour, minute: 0)) ?? Date()
     }
 }
-
-// MARK: - Supporting Types
 
 enum ApiKeyStatus {
     case untested, testing, valid, invalid
@@ -493,36 +473,55 @@ struct ModelInfo: Identifiable, Hashable {
     let price: String
 }
 
-// MARK: - Reusable Components
-
-struct SettingsSection<Content: View>: View {
+struct SettingsCard<Content: View>: View {
     let title: String
     let icon: String
+    let detail: String
     @ViewBuilder let content: () -> Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.system(size: 12))
-                    .foregroundColor(Color(hex: 0xF59E0B).opacity(0.6))
-                Text(title)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.8))
-            }
+        TigerPanel(padding: 22, cornerRadius: 28) {
+            VStack(alignment: .leading, spacing: 18) {
+                HStack(spacing: 12) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(TigerPalette.gold.opacity(0.12))
+                            .frame(width: 34, height: 34)
 
-            content()
+                        Image(systemName: icon)
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundColor(TigerPalette.gold)
+                    }
+
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(title)
+                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            .foregroundColor(TigerPalette.textPrimary)
+                        Text(detail)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(TigerPalette.textSecondary)
+                    }
+                }
+
+                content()
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white.opacity(0.02))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(Color.white.opacity(0.04), lineWidth: 1)
-                )
-        )
+    }
+}
+
+struct SettingsLabel: View {
+    let text: String
+
+    init(_ text: String) {
+        self.text = text
+    }
+
+    var body: some View {
+        Text(text.uppercased())
+            .font(.system(size: 10, weight: .bold, design: .rounded))
+            .tracking(1.2)
+            .foregroundColor(TigerPalette.textMuted)
     }
 }
 
@@ -534,11 +533,11 @@ struct SettingsToggle: View {
     var body: some View {
         Toggle(isOn: $isOn) {
             Text(label)
-                .font(.system(size: 13))
-                .foregroundColor(.white.opacity(0.7))
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(TigerPalette.textPrimary)
         }
         .toggleStyle(.switch)
-        .tint(Color(hex: 0xF59E0B))
+        .tint(TigerPalette.gold)
         .onChange(of: isOn) { onChange() }
     }
 }
@@ -552,43 +551,61 @@ struct SettingsSlider: View {
     let onChange: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(label)
-                    .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.7))
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(TigerPalette.textPrimary)
                 Spacer()
                 Text(format(value))
-                    .font(.system(size: 12, weight: .medium, design: .monospaced))
-                    .foregroundColor(Color(hex: 0xF59E0B).opacity(0.8))
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .foregroundColor(TigerPalette.gold)
             }
             Slider(value: $value, in: range, step: step)
-                .tint(Color(hex: 0xF59E0B))
+                .tint(TigerPalette.gold)
                 .onChange(of: value) { onChange() }
         }
     }
 }
 
-struct ModelPicker: View {
+struct SettingsPickerBlock: View {
+    let title: String
     @Binding var selection: String
     let models: [ModelInfo]
     let onChange: () -> Void
 
     var body: some View {
-        Picker("", selection: $selection) {
-            Text("Select a model").tag("")
-            ForEach(models) { model in
-                HStack {
-                    Text(model.name)
-                    if !model.price.isEmpty {
-                        Text("(\(model.price))")
-                            .foregroundColor(.secondary)
-                    }
+        VStack(alignment: .leading, spacing: 8) {
+            SettingsLabel(title)
+
+            Picker("", selection: $selection) {
+                Text("Select a model").tag("")
+                ForEach(models) { model in
+                    Text(model.price.isEmpty ? model.name : "\(model.name) • \(model.price)")
+                        .tag(model.id)
                 }
-                .tag(model.id)
             }
+            .labelsHidden()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .tigerInsetField()
+            .onChange(of: selection) { onChange() }
         }
-        .labelsHidden()
-        .onChange(of: selection) { onChange() }
+    }
+}
+
+struct SettingsTimeField: View {
+    let title: String
+    @Binding var selection: Date
+    let onChange: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            SettingsLabel(title)
+            DatePicker("", selection: $selection, displayedComponents: .hourAndMinute)
+                .labelsHidden()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .tigerInsetField()
+                .onChange(of: selection) { onChange() }
+        }
     }
 }

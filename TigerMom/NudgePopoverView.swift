@@ -6,18 +6,14 @@ struct NudgePopoverView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Severity color strip
             Rectangle()
                 .fill(nudge.severity.color)
                 .frame(height: 4)
 
             VStack(spacing: 16) {
-                // Emoji header
-                Text(nudge.emoji)
-                    .font(.system(size: 40))
-                    .padding(.top, 8)
+                TigerMark(size: 60)
+                    .padding(.top, 10)
 
-                // Message
                 Text(nudge.message)
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.primary)
@@ -25,7 +21,6 @@ struct NudgePopoverView: View {
                     .lineLimit(4)
                     .padding(.horizontal, 16)
 
-                // Trigger info
                 if !nudge.trigger.isEmpty {
                     Text(nudge.trigger)
                         .font(.system(size: 12))
@@ -38,7 +33,6 @@ struct NudgePopoverView: View {
                         )
                 }
 
-                // Buttons
                 HStack(spacing: 12) {
                     Button {
                         onResponse("acknowledged")

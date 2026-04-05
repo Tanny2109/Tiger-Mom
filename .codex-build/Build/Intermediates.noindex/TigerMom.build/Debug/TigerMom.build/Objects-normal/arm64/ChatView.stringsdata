@@ -1,0 +1,80 @@
+{
+  "source": "/Users/tanmay/Projects/TigerMom/TigerMom/ChatView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Quick prompts",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 174
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ask for the truth.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 223
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tiger Mom can read your local activity history and respond with actual context, not generic advice.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 227
+        }
+      },
+      {
+        "comment": "",
+        "key": "Checking in with Tiger Mom...",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 241
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ask Tiger Mom anything about your day...",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 268
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cmd↩",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 301
+        }
+      },
+      {
+        "comment": "",
+        "key": "Send with Command-Return.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 358
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tiger Mom can read recent tracked activity and saved history to respond with specifics.",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 352
+        }
+      },
+      {
+        "comment": "",
+        "key": "The sidecar looks offline. Start the backend to restore history, analytics, and live replies.",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 353
+        }
+      }
+    ]
+  },
+  "version": 1
+}

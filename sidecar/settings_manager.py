@@ -5,12 +5,17 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from .database import Setting
+from dotenv import load_dotenv
 
-
+load_dotenv()
+import os
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+VISION_MODEL = "qwen/qwen3.6-plus:free"
+BRAIN_MODEL = "qwen/qwen3.6-plus:free"
 DEFAULT_SETTINGS: dict[str, str] = {
-    "openrouter_api_key": "",
-    "vision_model": "qwen/qwen3.5-plus-02-15",
-    "brain_model": "openai/gpt-5-mini",
+    "openrouter_api_key": OPENROUTER_API_KEY,
+    "vision_model": VISION_MODEL,
+    "brain_model": BRAIN_MODEL,
     "screenshot_interval": "120",
     "distraction_threshold": "15",
     "nudge_cooldown": "30",

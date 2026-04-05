@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>logFormatVersion</key>
+	<integer>12</integer>
+	<key>logs</key>
+	<dict>
+		<key>3F24EE0C-68BC-4356-A26A-194EB9A9FFCB</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>3F24EE0C-68BC-4356-A26A-194EB9A9FFCB.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>0</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>0</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>TigerMom project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>TigerMom</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Building project TigerMom with scheme TigerMom and configuration Debug</string>
+			<key>timeStartedRecording</key>
+			<real>797059710.71578395</real>
+			<key>timeStoppedRecording</key>
+			<real>797059717.18929398</real>
+			<key>title</key>
+			<string>Building project TigerMom with scheme TigerMom and configuration Debug</string>
+			<key>uniqueIdentifier</key>
+			<string>3F24EE0C-68BC-4356-A26A-194EB9A9FFCB</string>
+		</dict>
+		<key>C8E8C478-45CE-4A2D-BAAD-69C8A533842B</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>C8E8C478-45CE-4A2D-BAAD-69C8A533842B.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>0</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>0</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>TigerMom project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>TigerMom</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Building project TigerMom with scheme TigerMom and configuration Debug</string>
+			<key>timeStartedRecording</key>
+			<real>797060147.63717401</real>
+			<key>timeStoppedRecording</key>
+			<real>797060155.57801998</real>
+			<key>title</key>
+			<string>Building project TigerMom with scheme TigerMom and configuration Debug</string>
+			<key>uniqueIdentifier</key>
+			<string>C8E8C478-45CE-4A2D-BAAD-69C8A533842B</string>
+		</dict>
+	</dict>
+</dict>
+</plist>

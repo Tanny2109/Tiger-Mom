@@ -41,7 +41,7 @@ class NudgeManager {
 
             let nudgeData = NudgeData(
                 id: nudge["id"] as? String ?? UUID().uuidString,
-                emoji: nudge["emoji"] as? String ?? "🐯",
+                emoji: nudge["emoji"] as? String ?? "",
                 message: nudge["message"] as? String ?? "",
                 severity: parseSeverity(nudge["severity"] as? String),
                 trigger: nudge["trigger"] as? String ?? ""
@@ -108,9 +108,9 @@ class NudgeManager {
     private func updateMenuBarIcon(isNudgeActive: Bool) {
         guard let button = statusItem?.button else { return }
         if isNudgeActive {
-            button.contentTintColor = NSColor.systemRed
+            button.contentTintColor = NSColor(red: 0.843, green: 0.604, blue: 0.451, alpha: 1.0)
         } else {
-            button.contentTintColor = NSColor(red: 0.961, green: 0.620, blue: 0.043, alpha: 1.0)
+            button.contentTintColor = NSColor(red: 0.949, green: 0.753, blue: 0.471, alpha: 1.0)
         }
     }
 }

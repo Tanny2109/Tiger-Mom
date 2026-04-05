@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 @main
 struct TigerMomApp: App {
@@ -10,11 +11,11 @@ struct TigerMomApp: App {
                 appState: appDelegate.appState,
                 screenCapture: appDelegate.screenCapture
             )
-            .frame(minWidth: 800, minHeight: 600)
-            .background(Color(hex: 0x07070A))
+            .frame(minWidth: 1080, minHeight: 760)
+            .background(TigerPalette.background)
         }
-        .defaultSize(width: 1000, height: 700)
-        .windowStyle(.titleBar)
+        .defaultSize(width: 1360, height: 860)
+        .windowStyle(.hiddenTitleBar)
     }
 }
 
@@ -49,11 +50,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
 
         if let button = statusItem?.button {
-            let image = NSImage(systemSymbolName: "eye.fill", accessibilityDescription: "Tiger Mom")
-            let config = NSImage.SymbolConfiguration(pointSize: 14, weight: .medium)
-            let tintedImage = image?.withSymbolConfiguration(config)
-            button.image = tintedImage
-            button.contentTintColor = NSColor(red: 0.961, green: 0.620, blue: 0.043, alpha: 1.0)
+            button.image = TigerStatusImage.makeTemplateImage()
+            button.contentTintColor = NSColor(red: 0.949, green: 0.753, blue: 0.471, alpha: 1.0)
             button.action = #selector(menuBarClicked)
             button.target = self
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
@@ -81,5 +79,56 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if let window = NSApp.windows.first(where: { $0.canBecomeMain }) {
             window.makeKeyAndOrderFront(nil)
         }
+    }
+}
+
+enum TigerStatusImage {
+    static func makeTemplateImage(size: CGFloat = 18) -> NSImage {
+        let image = NSImage(size: NSSize(width: size, height: size))
+        image.lockFocus()
+
+        let canvas = NSRect(x: 0, y: 0, width: size, height: size)
+        let eyeRect = canvas.insetBy(dx: size * 0.18, dy: size * 0.33)
+
+        let eyePath = NSBezierPath()
+        eyePath.move(to: NSPoint(x: eyeRect.minX, y: eyeRect.midY))
+        eyePath.curve(
+            to: NSPoint(x: eyeRect.maxX, y: eyeRect.midY),
+            controlPoint1: NSPoint(x: eyeRect.minX + eyeRect.width * 0.2, y: eyeRect.maxY),
+            controlPoint2: NSPoint(x: eyeRect.minX + eyeRect.width * 0.8, y: eyeRect.maxY)
+        )
+        eyePath.curve(
+            to: NSPoint(x: eyeRect.minX, y: eyeRect.midY),
+            controlPoint1: NSPoint(x: eyeRect.minX + eyeRect.width * 0.8, y: eyeRect.minY),
+            controlPoint2: NSPoint(x: eyeRect.minX + eyeRect.width * 0.2, y: eyeRect.minY)
+        )
+        eyePath.close()
+
+        NSColor.white.setFill()
+        eyePath.fill()
+
+        let irisRect = NSRect(
+            x: canvas.midX - size * 0.13,
+            y: canvas.midY - size * 0.13,
+            width: size * 0.26,
+            height: size * 0.26
+        )
+        let irisCutout = NSBezierPath(ovalIn: irisRect)
+        NSColor.black.setFill()
+        irisCutout.fill()
+
+        let pupilRect = NSRect(
+            x: canvas.midX - size * 0.022,
+            y: canvas.midY - size * 0.13,
+            width: size * 0.044,
+            height: size * 0.26
+        )
+        let pupil = NSBezierPath(roundedRect: pupilRect, xRadius: size * 0.025, yRadius: size * 0.025)
+        NSColor.white.setFill()
+        pupil.fill()
+
+        image.unlockFocus()
+        image.isTemplate = true
+        return image
     }
 }

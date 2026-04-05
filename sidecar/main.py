@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, File, HTTPException, Query, UploadFile
@@ -43,16 +44,10 @@ def reconfigure_scheduler() -> None:
 
 def _recommended_models() -> dict[str, Any]:
     vision_models = [
-        {"id": "qwen/qwen3.5-plus-02-15", "name": "Qwen3.5 Plus", "price": "$0.26/$1.56"},
-        {"id": "qwen/qwen3-vl-32b-instruct", "name": "Qwen3-VL 32B", "price": "$0.10/$0.40"},
-        {"id": "qwen/qwen3.5-flash", "name": "Qwen3.5 Flash", "price": "$0.06/$0.26"},
+        {"id": "qwen/qwen3.6-plus:free", "name": "Qwen3.6 Plus", "price": "$0/$0"},
     ]
     brain_models = [
-        {"id": "openai/gpt-5-mini", "name": "GPT-5 mini", "price": "$0.25/$2.00"},
-        {"id": "openai/gpt-5.4-mini", "name": "GPT-5.4 mini", "price": "$0.75/$4.50"},
-        {"id": "anthropic/claude-sonnet-4.6", "name": "Sonnet 4.6", "price": "$3.00/$15.00"},
-        {"id": "google/gemini-2.5-flash", "name": "Gemini 2.5 Flash", "price": "$0.30/$2.50"},
-        {"id": "anthropic/claude-haiku-4.5", "name": "Haiku 4.5", "price": "$1.00/$5.00"},
+        {"id": "qwen/qwen3.6-plus:free", "name": "Qwen3.6 Plus", "price": "$0/$0"},
     ]
     models = [*vision_models, *brain_models]
     return {"vision_models": vision_models, "brain_models": brain_models, "models": models}
@@ -130,6 +125,7 @@ async def screenshot(screenshot: UploadFile = File(...)) -> dict[str, Any]:
     with session_scope() as session:
         store_screenshots = bool(get_setting(session, "store_screenshots", True))
         saved_path = _save_screenshot(image_bytes) if store_screenshots else None
+        # calling vision model to see whats in screenshot...
         description, activity_data = process_screenshot(session, image_bytes, saved_path)
 
         activity = Activity(
@@ -225,9 +221,13 @@ def search_activities(
 
 
 @app.get("/analytics/daily")
-def analytics_daily() -> dict[str, Any]:
+def analytics_daily(include_report: bool = Query(default=True)) -> dict[str, Any]:
     with session_scope() as session:
-        return get_daily_analytics_payload(session)
+        return get_daily_analytics_payload(
+            session,
+            include_report=include_report,
+            generate_report_if_missing=include_report,
+        )
 
 
 @app.get("/analytics/weekly")

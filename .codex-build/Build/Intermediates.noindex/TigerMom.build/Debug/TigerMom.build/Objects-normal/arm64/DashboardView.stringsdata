@@ -1,0 +1,128 @@
+{
+  "source": "/Users/tanmay/Projects/TigerMom/TigerMom/DashboardView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 183
+        }
+      },
+      {
+        "comment": "",
+        "key": "Focus score",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 187
+        }
+      },
+      {
+        "comment": "",
+        "key": "Start",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 240
+        }
+      },
+      {
+        "comment": "",
+        "key": "Midday",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 242
+        }
+      },
+      {
+        "comment": "",
+        "key": "Now",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 244
+        }
+      },
+      {
+        "comment": "",
+        "key": "Minutes",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 270
+        }
+      },
+      {
+        "comment": "",
+        "key": "Top distractors",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 302
+        }
+      },
+      {
+        "comment": "",
+        "key": "Day",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 365
+        }
+      },
+      {
+        "comment": "",
+        "key": "Focus Hours",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 366
+        }
+      },
+      {
+        "comment": "",
+        "key": "Day",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 372
+        }
+      },
+      {
+        "comment": "",
+        "key": "Distraction",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 373
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lldh",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 386
+        }
+      },
+      {
+        "comment": "",
+        "key": "Grant Access",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 594
+        }
+      },
+      {
+        "comment": "",
+        "key": "Screen Recording Permission Required",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 584
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tiger Mom needs screen access to render the timeline, activity log, and coaching.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 587
+        }
+      }
+    ]
+  },
+  "version": 1
+}

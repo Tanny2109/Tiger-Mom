@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -7,8 +8,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .analytics import get_recent_activities, get_today_summary
-from .classifier import call_openrouter_chat
 from .database import Activity, ChatMessage, NudgeQueue, Nudge
+from .llm import openrouter_chat, run_structured_agent
+from .models import TigerMomNudgeCopy
 from .settings_manager import (
     get_distraction_threshold_seconds,
     get_nudge_cooldown_seconds,
@@ -18,10 +20,14 @@ from .settings_manager import (
 
 
 TIGER_MOM_CHAT_SYSTEM = """You are Tiger Mom. You monitor your child's computer and they can chat with you anytime.
-You know what they've been doing recently:
+Use the recent activity data and today's stats exactly as provided below.
+
+Recent activity JSON:
 {recent_activity}
-Today's stats so far:
+
+Today's stats JSON:
 {today_stats}
+
 Intensity level: {intensity}
 
 PERSONALITY:
@@ -34,31 +40,18 @@ PERSONALITY:
 - You're not a generic assistant. You're their mom."""
 
 
-def format_activities(activities: list[Any]) -> str:
-    if not activities:
-        return "No recent activity recorded."
+NUDGE_COPY_INSTRUCTIONS = """You are Tiger Mom writing a short productivity nudge.
 
-    lines = []
-    for activity in reversed(activities[:8]):
-        stamp = activity.timestamp.strftime("%I:%M %p").lstrip("0")
-        lines.append(f"- {stamp}: {activity.category} in {activity.app_name} ({activity.detail or activity.window_title})")
-    return "\n".join(lines)
-
-
-def format_stats(stats: dict[str, Any]) -> str:
-    return (
-        f"Focus score {stats.get('focus_score', 0)}. "
-        f"Deep work {stats.get('deep_work_minutes', 0)} min. "
-        f"Distraction {stats.get('distraction_minutes', 0)} min. "
-        f"Shallow work {stats.get('shallow_work_minutes', 0)} min. "
-        f"Communication {stats.get('communication_minutes', 0)} min."
-    )
+You will receive a JSON object with the user's recent distraction data and intensity level.
+- Write one short message in Tiger Mom voice.
+- Make it sound like a menu bar popover, not a long lecture.
+- Keep it under 180 characters.
+- Pick severity based on the situation: yellow for normal, red for obviously bad drift.
+- Always return an emoji, usually the tiger."""
 
 
-def _context_summary(session: Session) -> str:
-    recent = get_recent_activities(session, minutes=60, limit=6)
-    stats = get_today_summary(session)
-    return f"{format_activities(recent)}\n{format_stats(stats)}"
+def _recent_activity_payload(activities: list[Any]) -> list[dict[str, Any]]:
+    return [activity.to_dict() for activity in reversed(activities)]
 
 
 def save_chat_message(session: Session, role: str, content: str, context_summary: str) -> ChatMessage:
@@ -87,6 +80,7 @@ def _fallback_reply(user_msg: str, stats: dict[str, Any], recent_summary: str, i
     deep = stats.get("deep_work_minutes", 0)
     distraction = stats.get("distraction_minutes", 0)
     score = stats.get("focus_score", 0)
+    recent_note = recent_summary[:140] if recent_summary else "not much yet"
 
     if "how am i doing" in lowered or "stats" in lowered or "on track" in lowered:
         return (
@@ -96,7 +90,7 @@ def _fallback_reply(user_msg: str, stats: dict[str, Any], recent_summary: str, i
         )
     if "focus" in lowered or "what should i" in lowered:
         return (
-            f"Recent activity says: {recent_summary.splitlines()[-1] if recent_summary.splitlines() else 'not much yet'}. "
+            f"Recent activity says: {recent_note}. "
             "Pick one concrete task and stay there for the next block. No wandering."
         )
     if intensity == "fierce":
@@ -109,28 +103,34 @@ def _fallback_reply(user_msg: str, stats: dict[str, Any], recent_summary: str, i
 def generate_chat_reply(session: Session, user_message: str) -> str:
     recent = get_recent_activities(session, minutes=60, limit=10)
     stats = get_today_summary(session)
-    history = get_chat_history(session, limit=20)
+    history = get_chat_history(session, limit=12)
     intensity = str(get_setting(session, "tiger_mom_intensity", "medium"))
-    recent_summary = format_activities(recent)
-    stats_summary = format_stats(stats)
-    context_summary = f"{recent_summary}\n{stats_summary}"
+    recent_summary = json.dumps(_recent_activity_payload(recent), ensure_ascii=True)
+    stats_summary = json.dumps(stats, ensure_ascii=True)
+    context_summary = json.dumps(
+        {
+            "recent_activities": _recent_activity_payload(recent),
+            "today_stats": stats,
+        },
+        ensure_ascii=True,
+    )
 
     system_prompt = TIGER_MOM_CHAT_SYSTEM.format(
         recent_activity=recent_summary,
         today_stats=stats_summary,
         intensity=intensity,
     )
-    model = str(get_setting(session, "brain_model", "openai/gpt-5-mini"))
-    response = call_openrouter_chat(
+    response = openrouter_chat(
         session,
-        model,
-        [
+        messages=[
             {"role": "system", "content": system_prompt},
             *history,
             {"role": "user", "content": user_message},
         ],
-        max_tokens=220,
-        temperature=0.7,
+        model_key="brain_model",
+        default_model="qwen/qwen3.6-plus:free",
+        max_tokens=140,
+        temperature=0.5,
     )
     reply = response.strip() if response else _fallback_reply(user_message, stats, recent_summary, intensity)
 
@@ -157,6 +157,43 @@ def _nudge_message(intensity: str, distraction_minutes: int, apps: list[str]) ->
         "🐯",
         f"You've spent {distraction_minutes} distraction minutes in {app_phrase}. Explain yourself later. Refocus now.",
         "yellow",
+    )
+
+
+def _agent_nudge_message(
+    session: Session,
+    *,
+    intensity: str,
+    distraction_minutes: int,
+    recent_distraction_activities: list[Activity],
+) -> tuple[str, str, str]:
+    result = run_structured_agent(
+        session,
+        name="Tiger Mom Nudge Writer",
+        instructions=NUDGE_COPY_INSTRUCTIONS,
+        input_data=(
+            "Here is the recent distraction context as JSON.\n"
+            + json.dumps(
+                {
+                    "intensity": intensity,
+                    "distraction_minutes": distraction_minutes,
+                    "recent_distraction_activities": [activity.to_dict() for activity in recent_distraction_activities],
+                },
+                ensure_ascii=True,
+            )
+        ),
+        output_type=TigerMomNudgeCopy,
+        model_key="brain_model",
+        default_model="qwen/qwen3.6-plus:free",
+        temperature=0.6,
+        max_tokens=140,
+    )
+    if result:
+        return result.emoji, result.message.strip(), result.severity
+    return _nudge_message(
+        intensity,
+        distraction_minutes,
+        [activity.app_name for activity in recent_distraction_activities if activity.app_name],
     )
 
 
@@ -196,8 +233,12 @@ def maybe_queue_nudge(session: Session) -> NudgeQueue | None:
     distraction_minutes = len(recent) * interval_minutes
 
     intensity = str(get_setting(session, "tiger_mom_intensity", "medium"))
-    app_names = [activity.app_name for activity in recent if activity.app_name]
-    emoji, message, severity = _nudge_message(intensity, distraction_minutes, app_names)
+    emoji, message, severity = _agent_nudge_message(
+        session,
+        intensity=intensity,
+        distraction_minutes=distraction_minutes,
+        recent_distraction_activities=recent,
+    )
     queue_item = NudgeQueue(
         emoji=emoji,
         message=message,

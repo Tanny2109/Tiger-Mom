@@ -77,8 +77,8 @@ final class APIClient: Sendable {
 
     // MARK: - Analytics
 
-    func analyticsDaily() async throws -> [String: Any] {
-        try await get("/analytics/daily")
+    func analyticsDaily(includeReport: Bool = true) async throws -> [String: Any] {
+        try await get("/analytics/daily?include_report=\(includeReport ? "true" : "false")")
     }
 
     func analyticsWeekly() async throws -> [String: Any] {

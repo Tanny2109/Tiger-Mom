@@ -1,7 +1,5 @@
 import SwiftUI
 
-// MARK: - Activity Models
-
 struct ActivityEntry: Identifiable {
     let id: String
     let timestamp: Date
@@ -14,160 +12,169 @@ struct ActivityEntry: Identifiable {
     let classificationReason: String
 }
 
-// MARK: - Activity View
-
 struct ActivityView: View {
     @State private var activities: [ActivityEntry] = []
-    @State private var selectedFilter: ActivityType? = nil
+    @State private var selectedFilter: ActivityType?
     @State private var searchText = ""
     @State private var currentPage = 1
     @State private var isLoading = false
     @State private var hasMore = true
-    @State private var expandedId: String? = nil
+    @State private var expandedId: String?
 
     private let pageSize = 50
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Header
-            HStack {
-                Text("Activity")
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundColor(.white)
-                Spacer()
-                Text("\(filteredActivities.count) entries")
-                    .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.3))
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(spacing: 20) {
+                header
+                filterBar
+                activityStage
             }
-            .padding(.horizontal, 28)
-            .padding(.top, 28)
-            .padding(.bottom, 16)
-
-            // Filter bar
-            filterBar
-                .padding(.horizontal, 28)
-                .padding(.bottom, 12)
-
-            Rectangle()
-                .fill(Color.white.opacity(0.06))
-                .frame(height: 1)
-
-            // Activity list
-            if activities.isEmpty && !isLoading {
-                emptyState
-            } else {
-                ScrollView(.vertical, showsIndicators: false) {
-                    LazyVStack(spacing: 6) {
-                        ForEach(filteredActivities) { entry in
-                            ActivityRow(
-                                entry: entry,
-                                isExpanded: expandedId == entry.id,
-                                onTap: {
-                                    withAnimation(.easeOut(duration: 0.2)) {
-                                        expandedId = expandedId == entry.id ? nil : entry.id
-                                    }
-                                }
-                            )
-                        }
-
-                        if hasMore && !isLoading {
-                            ProgressView()
-                                .scaleEffect(0.7)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 16)
-                                .onAppear {
-                                    Task { await loadMore() }
-                                }
-                        }
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 12)
-                }
-            }
+            .padding(24)
         }
-        .background(Color(hex: 0x07070A))
         .task {
             await loadInitial()
         }
     }
 
-    // MARK: - Filter Bar
+    private var header: some View {
+        TigerPanel(padding: 24, cornerRadius: 28, emphasis: 1.08) {
+            HStack(alignment: .top, spacing: 18) {
+                VStack(alignment: .leading, spacing: 12) {
+                    TigerSectionHeader(
+                        eyebrow: "Forensics",
+                        title: "Activity Log",
+                        detail: "A scrollable record of what the sidecar thinks you were doing."
+                    )
 
-    private var filterBar: some View {
-        VStack(spacing: 10) {
-            // Category pills
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 6) {
-                    FilterPill(label: "All", isSelected: selectedFilter == nil) {
-                        selectedFilter = nil
-                    }
-                    ForEach(ActivityType.allCases, id: \.rawValue) { type in
-                        FilterPill(label: type.rawValue, color: type.color, isSelected: selectedFilter == type) {
-                            selectedFilter = type
-                        }
+                    HStack(spacing: 10) {
+                        TigerCapsuleBadge(title: "\(filteredActivities.count) visible", symbol: "line.3.horizontal.decrease.circle.fill", tint: TigerPalette.mist)
+                        TigerCapsuleBadge(title: "\(activities.count) loaded", symbol: "clock.arrow.trianglehead.counterclockwise.rotate.90", tint: TigerPalette.gold)
                     }
                 }
-            }
 
-            // Search
-            HStack(spacing: 8) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.3))
-                TextField("Search apps, titles, details...", text: $searchText)
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 13))
-                    .foregroundColor(.white)
-                if !searchText.isEmpty {
-                    Button {
-                        searchText = ""
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 12))
-                            .foregroundColor(.white.opacity(0.3))
-                    }
-                    .buttonStyle(.plain)
-                }
+                Spacer()
+
+                Text(searchText.isEmpty ? "Readable, not raw." : "Filtering for “\(searchText)”")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(TigerPalette.textSecondary)
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 7)
-            .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.05)))
         }
     }
 
-    // MARK: - Filtered
+    private var filterBar: some View {
+        TigerPanel(padding: 20, cornerRadius: 24) {
+            VStack(alignment: .leading, spacing: 14) {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        FilterPill(label: "All", color: TigerPalette.mist, isSelected: selectedFilter == nil) {
+                            selectedFilter = nil
+                        }
+
+                        ForEach(ActivityType.allCases, id: \.rawValue) { type in
+                            FilterPill(label: type.rawValue, color: type.color, isSelected: selectedFilter == type) {
+                                selectedFilter = type
+                            }
+                        }
+                    }
+                }
+
+                HStack(spacing: 10) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundColor(TigerPalette.textMuted)
+
+                    TextField("Search apps, titles, details, and context…", text: $searchText)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(TigerPalette.textPrimary)
+
+                    if !searchText.isEmpty {
+                        Button {
+                            searchText = ""
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 13))
+                                .foregroundColor(TigerPalette.textMuted)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .tigerInsetField()
+            }
+        }
+    }
+
+    private var activityStage: some View {
+        TigerPanel(padding: 0, cornerRadius: 30, emphasis: 1.02) {
+            if activities.isEmpty && !isLoading {
+                emptyState
+            } else {
+                LazyVStack(spacing: 10) {
+                    ForEach(filteredActivities) { entry in
+                        ActivityRow(
+                            entry: entry,
+                            isExpanded: expandedId == entry.id,
+                            onTap: {
+                                withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
+                                    expandedId = expandedId == entry.id ? nil : entry.id
+                                }
+                            }
+                        )
+                    }
+
+                    if hasMore && !isLoading {
+                        ProgressView()
+                            .padding(.vertical, 18)
+                            .onAppear {
+                                Task { await loadMore() }
+                            }
+                    }
+                }
+                .padding(18)
+            }
+        }
+    }
 
     private var filteredActivities: [ActivityEntry] {
         activities.filter { entry in
             let matchesCategory = selectedFilter == nil || entry.category == selectedFilter
-            let matchesSearch = searchText.isEmpty ||
-                entry.appName.localizedCaseInsensitiveContains(searchText) ||
-                entry.windowTitle.localizedCaseInsensitiveContains(searchText) ||
-                entry.detail.localizedCaseInsensitiveContains(searchText)
+            let matchesSearch = searchText.isEmpty
+                || entry.appName.localizedCaseInsensitiveContains(searchText)
+                || entry.windowTitle.localizedCaseInsensitiveContains(searchText)
+                || entry.detail.localizedCaseInsensitiveContains(searchText)
+                || entry.classificationReason.localizedCaseInsensitiveContains(searchText)
             return matchesCategory && matchesSearch
         }
     }
 
-    // MARK: - Empty State
-
     private var emptyState: some View {
-        VStack(spacing: 16) {
-            Spacer()
-            Image(systemName: "eye.fill")
-                .font(.system(size: 36))
-                .foregroundColor(Color(hex: 0xF59E0B).opacity(0.2))
-            Text("Tiger Mom is watching...")
-                .font(.system(size: 15, weight: .medium))
-                .foregroundColor(.white.opacity(0.4))
-            Text("Activities will appear here once tracking starts.")
-                .font(.system(size: 13))
-                .foregroundColor(.white.opacity(0.2))
-            Spacer()
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
+        VStack(spacing: 18) {
+            Spacer(minLength: 80)
 
-    // MARK: - Data Loading
+            ZStack {
+                Circle()
+                    .fill(TigerPalette.amber.opacity(0.1))
+                    .frame(width: 92, height: 92)
+                TigerMark(size: 58, framed: false)
+            }
+
+            Text("The log is waiting.")
+                .font(.system(size: 20, weight: .semibold, design: .rounded))
+                .foregroundColor(TigerPalette.textPrimary)
+
+            Text("Activities will appear here once tracking starts and the sidecar begins classifying screenshots.")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(TigerPalette.textSecondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 420)
+                .lineSpacing(3)
+
+            Spacer(minLength: 80)
+        }
+        .frame(maxWidth: .infinity, minHeight: 520)
+        .padding(24)
+    }
 
     private func loadInitial() async {
         currentPage = 1
@@ -181,10 +188,6 @@ struct ActivityView: View {
         isLoading = true
 
         do {
-            var path = "/activities?page=\(currentPage)&limit=\(pageSize)"
-            if let filter = selectedFilter {
-                path += "&category=\(filter.rawValue)"
-            }
             let response = try await APIClient.shared.getActivities(page: currentPage, limit: pageSize, category: selectedFilter?.rawValue)
 
             guard let items = response["activities"] as? [[String: Any]] else {
@@ -193,7 +196,7 @@ struct ActivityView: View {
                 return
             }
 
-            let newEntries = items.compactMap { parseActivity($0) }
+            let newEntries = items.compactMap(parseActivity)
             activities.append(contentsOf: newEntries)
             hasMore = newEntries.count >= pageSize
             currentPage += 1
@@ -208,13 +211,12 @@ struct ActivityView: View {
         guard let id = dict["id"] as? String,
               let appName = dict["app_name"] as? String else { return nil }
 
-        let ts = (dict["timestamp"] as? Double).map { Date(timeIntervalSince1970: $0) } ?? Date()
-        let typeStr = dict["category"] as? String ?? "Break"
-        let type = ActivityType(rawValue: typeStr) ?? .breakTime
+        let timestamp = (dict["timestamp"] as? Double).map { Date(timeIntervalSince1970: $0) } ?? Date()
+        let type = ActivityType(rawValue: dict["category"] as? String ?? "Break") ?? .breakTime
 
         return ActivityEntry(
             id: id,
-            timestamp: ts,
+            timestamp: timestamp,
             appName: appName,
             windowTitle: dict["window_title"] as? String ?? "",
             category: type,
@@ -226,35 +228,31 @@ struct ActivityView: View {
     }
 }
 
-// MARK: - Filter Pill
-
 struct FilterPill: View {
     let label: String
-    var color: Color = Color(hex: 0xF59E0B)
+    var color: Color = TigerPalette.gold
     let isSelected: Bool
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             Text(label)
-                .font(.system(size: 12, weight: isSelected ? .semibold : .regular))
-                .foregroundColor(isSelected ? .white : .white.opacity(0.45))
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .foregroundColor(isSelected ? color : TigerPalette.textSecondary)
                 .padding(.horizontal, 12)
-                .padding(.vertical, 5)
+                .padding(.vertical, 9)
                 .background(
-                    Capsule()
-                        .fill(isSelected ? color.opacity(0.25) : Color.white.opacity(0.04))
-                )
-                .overlay(
-                    Capsule()
-                        .strokeBorder(isSelected ? color.opacity(0.4) : Color.clear, lineWidth: 1)
+                    Capsule(style: .continuous)
+                        .fill(isSelected ? color.opacity(0.14) : Color.white.opacity(0.04))
+                        .overlay(
+                            Capsule(style: .continuous)
+                                .strokeBorder(isSelected ? color.opacity(0.18) : Color.white.opacity(0.04), lineWidth: 1)
+                        )
                 )
         }
         .buttonStyle(.plain)
     }
 }
-
-// MARK: - Activity Row
 
 struct ActivityRow: View {
     let entry: ActivityEntry
@@ -266,122 +264,116 @@ struct ActivityRow: View {
     var body: some View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 0) {
-                // Main row
-                HStack(spacing: 12) {
-                    // App icon
-                    Image(systemName: iconForApp(entry.appName))
-                        .font(.system(size: 14))
-                        .foregroundColor(entry.category.color.opacity(0.7))
-                        .frame(width: 30, height: 30)
-                        .background(
-                            RoundedRectangle(cornerRadius: 7)
-                                .fill(entry.category.color.opacity(0.1))
-                        )
+                HStack(spacing: 14) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(entry.category.color.opacity(0.12))
+                            .frame(width: 40, height: 40)
 
-                    // App + title
-                    VStack(alignment: .leading, spacing: 2) {
-                        HStack(spacing: 6) {
+                        Image(systemName: iconForApp(entry.appName))
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(entry.category.color)
+                    }
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 8) {
                             Text(entry.appName)
-                                .font(.system(size: 13, weight: .medium))
-                                .foregroundColor(.white.opacity(0.85))
+                                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                .foregroundColor(TigerPalette.textPrimary)
+
                             if !entry.windowTitle.isEmpty {
-                                Text("— \(entry.windowTitle)")
-                                    .font(.system(size: 12))
-                                    .foregroundColor(.white.opacity(0.35))
+                                Text(entry.windowTitle)
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(TigerPalette.textSecondary)
                                     .lineLimit(1)
                             }
                         }
 
                         if !entry.detail.isEmpty {
                             Text(entry.detail)
-                                .font(.system(size: 11))
-                                .foregroundColor(.white.opacity(0.3))
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(TigerPalette.textSecondary)
                                 .lineLimit(isExpanded ? nil : 1)
                         }
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
 
-                    // Category badge
+                    Spacer()
+
                     Text(entry.category.rawValue)
-                        .font(.system(size: 10, weight: .medium))
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
                         .foregroundColor(entry.category.color)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 7)
                         .background(
-                            Capsule().fill(entry.category.color.opacity(0.12))
+                            Capsule(style: .continuous)
+                                .fill(entry.category.color.opacity(0.12))
                         )
 
-                    // Timestamp
                     Text(entry.timestamp.formatted(date: .omitted, time: .shortened))
-                        .font(.system(size: 11, design: .monospaced))
-                        .foregroundColor(.white.opacity(0.25))
-                        .frame(width: 60, alignment: .trailing)
+                        .font(.system(size: 11, weight: .medium, design: .rounded))
+                        .foregroundColor(TigerPalette.textMuted)
+                        .frame(width: 72, alignment: .trailing)
                 }
 
-                // Expanded details
                 if isExpanded {
                     expandedDetails
                 }
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 16)
             .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(isHovered ? Color.white.opacity(0.04) : Color.white.opacity(0.02))
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(isHovered ? Color.white.opacity(0.05) : Color.white.opacity(0.035))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .strokeBorder(Color.white.opacity(isExpanded ? 0.06 : 0.03), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 24, style: .continuous)
+                            .strokeBorder(Color.white.opacity(isExpanded ? 0.08 : 0.05), lineWidth: 1)
                     )
             )
         }
         .buttonStyle(.plain)
-        .onHover { hovering in
-            isHovered = hovering
-        }
+        .onHover { isHovered = $0 }
     }
 
     private var expandedDetails: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Rectangle()
-                .fill(Color.white.opacity(0.04))
-                .frame(height: 1)
-                .padding(.top, 8)
+        VStack(alignment: .leading, spacing: 12) {
+            TigerDivider()
+                .padding(.top, 14)
+                .padding(.bottom, 2)
 
             if !entry.detail.isEmpty {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Detail")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.25))
-                    Text(entry.detail)
-                        .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.5))
-                        .lineSpacing(3)
-                }
+                detailBlock(title: "Detail", value: entry.detail)
             }
 
             if !entry.classificationReason.isEmpty {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Classification Reason")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.25))
-                    Text(entry.classificationReason)
-                        .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.5))
-                        .lineSpacing(3)
-                }
+                detailBlock(title: "Classification reason", value: entry.classificationReason)
             }
 
             HStack(spacing: 16) {
                 if !entry.subcategory.isEmpty {
-                    Label(entry.subcategory, systemImage: "tag")
-                        .font(.system(size: 11))
-                        .foregroundColor(.white.opacity(0.3))
+                    Label(entry.subcategory, systemImage: "tag.fill")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(TigerPalette.textSecondary)
                 }
-                Label("\(Int(entry.confidence * 100))% confidence", systemImage: "checkmark.seal")
-                    .font(.system(size: 11))
-                    .foregroundColor(.white.opacity(0.3))
+
+                Label("\(Int(entry.confidence * 100))% confidence", systemImage: "checkmark.seal.fill")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(TigerPalette.textSecondary)
             }
             .padding(.top, 2)
+        }
+    }
+
+    private func detailBlock(title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title.uppercased())
+                .font(.system(size: 10, weight: .bold, design: .rounded))
+                .tracking(1.1)
+                .foregroundColor(TigerPalette.textMuted)
+
+            Text(value)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(TigerPalette.textSecondary)
+                .lineSpacing(4)
         }
     }
 

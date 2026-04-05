@@ -8,8 +8,9 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .classifier import call_openrouter_chat
 from .database import Activity, DailySummary
+from .llm import run_structured_agent
+from .models import TigerMomCommentary
 from .settings_manager import get_screenshot_interval_seconds, get_setting
 
 
@@ -81,28 +82,35 @@ def _fallback_commentary(totals: dict[str, int], score: int) -> str:
 
 
 def _maybe_generate_commentary(session: Session, totals: dict[str, int], score: int, distractors: list[str]) -> str:
-    model = str(get_setting(session, "brain_model", "openai/gpt-5-mini"))
-    prompt = (
-        "Write a concise Tiger Mom report card comment in 2-3 sentences.\n"
-        f"Focus score: {score}\n"
-        f"Deep work minutes: {totals['Deep Work']}\n"
-        f"Communication minutes: {totals['Communication']}\n"
-        f"Shallow work minutes: {totals['Shallow Work']}\n"
-        f"Distraction minutes: {totals['Distraction']}\n"
-        f"Top distractors: {', '.join(distractors) or 'none'}\n"
-        "Stay in character: sharp, funny, fair."
-    )
-    content = call_openrouter_chat(
+    stats_payload = {
+        "focus_score": score,
+        "deep_work_minutes": totals["Deep Work"],
+        "communication_minutes": totals["Communication"],
+        "shallow_work_minutes": totals["Shallow Work"],
+        "distraction_minutes": totals["Distraction"],
+        "top_distractors": distractors,
+    }
+    result = run_structured_agent(
         session,
-        model,
-        [
-            {"role": "system", "content": "You are Tiger Mom writing a report card comment."},
-            {"role": "user", "content": prompt},
-        ],
-        max_tokens=160,
+        name="Daily Analytics Commentary",
+        instructions="""You are Tiger Mom writing a daily report card comment.
+
+Use the provided JSON data directly.
+- Stay in character: sharp, funny, fair.
+- Write 2-3 short sentences.
+- Mention specifics from the stats when useful.
+- Do not add markdown or bullet points.""",
+        input_data=(
+            "Here is today's productivity data as JSON.\n"
+            f"{json.dumps(stats_payload, ensure_ascii=True)}"
+        ),
+        output_type=TigerMomCommentary,
+        model_key="brain_model",
+        default_model=str(get_setting(session, "brain_model", "qwen/qwen3.6-plus:free")),
         temperature=0.4,
+        max_tokens=180,
     )
-    return content.strip() if content else _fallback_commentary(totals, score)
+    return result.commentary.strip() if result else _fallback_commentary(totals, score)
 
 
 def _serialize_categories(totals: dict[str, int]) -> list[dict[str, Any]]:
@@ -113,7 +121,12 @@ def _serialize_categories(totals: dict[str, int]) -> list[dict[str, Any]]:
     ]
 
 
-def get_daily_analytics_payload(session: Session) -> dict[str, Any]:
+def get_daily_analytics_payload(
+    session: Session,
+    *,
+    include_report: bool = True,
+    generate_report_if_missing: bool = True,
+) -> dict[str, Any]:
     start, end = _day_bounds()
     activities = _activities_for_window(session, start, end)
     minutes_per_activity = max(1, get_screenshot_interval_seconds(session) // 60)
@@ -131,10 +144,11 @@ def get_daily_analytics_payload(session: Session) -> dict[str, Any]:
         "top_distractors": distractors,
     }
 
-    if datetime.now().hour >= 18 and activities:
+    should_include_report = include_report and datetime.now().hour >= 18 and bool(activities)
+    if should_include_report:
+        day_key = start.date().isoformat()
         grade = _grade(score)
-        commentary = _maybe_generate_commentary(session, totals, score, distractors)
-        summary = session.get(DailySummary, start.date().isoformat()) or DailySummary(date=start.date().isoformat())
+        summary = session.get(DailySummary, day_key) or DailySummary(date=day_key)
         summary.focus_score = score
         summary.deep_work_minutes = totals["Deep Work"]
         summary.distraction_minutes = totals["Distraction"]
@@ -142,7 +156,15 @@ def get_daily_analytics_payload(session: Session) -> dict[str, Any]:
         summary.categories_json = json.dumps(payload["categories"])
         summary.top_distractors_json = json.dumps(distractors)
         summary.grade = grade
-        summary.commentary = commentary
+
+        if summary.commentary:
+            commentary = summary.commentary
+        elif generate_report_if_missing:
+            commentary = _maybe_generate_commentary(session, totals, score, distractors)
+            summary.commentary = commentary
+        else:
+            commentary = _fallback_commentary(totals, score)
+
         session.merge(summary)
         payload["mom_report"] = {"grade": grade, "commentary": commentary}
 
@@ -213,4 +235,4 @@ def get_recent_activities(session: Session, *, minutes: int = 60, limit: int = 1
 
 
 def get_today_summary(session: Session) -> dict[str, Any]:
-    return get_daily_analytics_payload(session)
+    return get_daily_analytics_payload(session, include_report=False, generate_report_if_missing=False)

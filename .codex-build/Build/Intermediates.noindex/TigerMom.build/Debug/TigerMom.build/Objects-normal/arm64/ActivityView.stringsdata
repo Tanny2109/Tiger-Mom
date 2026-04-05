@@ -1,0 +1,56 @@
+{
+  "source": "/Users/tanmay/Projects/TigerMom/TigerMom/ActivityView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Readable, not raw.",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 58
+        }
+      },
+      {
+        "comment": "",
+        "key": "Filtering for “%@”",
+        "location": {
+          "startingColumn": 66,
+          "startingLine": 58
+        }
+      },
+      {
+        "comment": "",
+        "key": "Search apps, titles, details, and context…",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 87
+        }
+      },
+      {
+        "comment": "",
+        "key": "The log is waiting.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 162
+        }
+      },
+      {
+        "comment": "",
+        "key": "Activities will appear here once tracking starts and the sidecar begins classifying screenshots.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 166
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld%% confidence",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 358
+        }
+      }
+    ]
+  },
+  "version": 1
+}

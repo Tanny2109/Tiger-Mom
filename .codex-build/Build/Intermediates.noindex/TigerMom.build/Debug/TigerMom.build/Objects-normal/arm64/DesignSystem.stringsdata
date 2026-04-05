@@ -1,0 +1,24 @@
+{
+  "source": "/Users/tanmay/Projects/TigerMom/TigerMom/DesignSystem.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Tiger Mom",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 254
+        }
+      },
+      {
+        "comment": "",
+        "key": "Watchful coaching for your Mac",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 258
+        }
+      }
+    ]
+  },
+  "version": 1
+}

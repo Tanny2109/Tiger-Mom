@@ -16,6 +16,15 @@ enum SidebarTab: String, CaseIterable, Identifiable {
         case .settings: return "gear"
         }
     }
+
+    var subtitle: String {
+        switch self {
+        case .dashboard: return "Pulse, trends, and report card"
+        case .chat: return "Live coaching with memory"
+        case .activity: return "A readable stream of behavior"
+        case .settings: return "Models, rules, and privacy"
+        }
+    }
 }
 
 @Observable
