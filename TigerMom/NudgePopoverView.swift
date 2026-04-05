@@ -6,60 +6,95 @@ struct NudgePopoverView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            // Severity indicator bar
             Rectangle()
-                .fill(nudge.severity.color)
-                .frame(height: 4)
+                .fill(severityColor)
+                .frame(height: 3)
 
-            VStack(spacing: 16) {
-                TigerMark(size: 60)
-                    .padding(.top, 10)
+            VStack(spacing: TigerSpacing.lg) {
+                // Logo
+                TigerMark(size: 48)
+                    .padding(.top, TigerSpacing.lg)
 
+                // Message
                 Text(nudge.message)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.primary)
+                    .font(TigerTypography.body)
+                    .foregroundColor(TigerPalette.textPrimary)
                     .multilineTextAlignment(.center)
                     .lineLimit(4)
-                    .padding(.horizontal, 16)
+                    .lineSpacing(3)
+                    .padding(.horizontal, TigerSpacing.lg)
 
+                // Trigger context
                 if !nudge.trigger.isEmpty {
                     Text(nudge.trigger)
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 6)
+                        .font(TigerTypography.caption)
+                        .foregroundColor(TigerPalette.textSecondary)
+                        .padding(.horizontal, TigerSpacing.md)
+                        .padding(.vertical, TigerSpacing.sm)
                         .background(
-                            RoundedRectangle(cornerRadius: 6)
-                                .fill(Color.primary.opacity(0.05))
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .fill(TigerPalette.backgroundTertiary)
                         )
                 }
 
-                HStack(spacing: 12) {
+                // Action buttons
+                HStack(spacing: TigerSpacing.md) {
                     Button {
                         onResponse("acknowledged")
                     } label: {
                         Text("OK fine...")
-                            .font(.system(size: 13, weight: .medium))
+                            .font(TigerTypography.bodySmall)
+                            .fontWeight(.semibold)
+                            .foregroundColor(TigerPalette.background)
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 8)
+                            .padding(.vertical, TigerSpacing.md)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .fill(severityColor)
+                            )
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(nudge.severity.color)
+                    .buttonStyle(.plain)
 
                     Button {
                         onResponse("snoozed")
                     } label: {
                         Text("5 more minutes")
-                            .font(.system(size: 13, weight: .medium))
+                            .font(TigerTypography.bodySmall)
+                            .fontWeight(.medium)
+                            .foregroundColor(TigerPalette.textPrimary)
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 8)
+                            .padding(.vertical, TigerSpacing.md)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .fill(TigerPalette.surface)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                            .strokeBorder(TigerPalette.border, lineWidth: 1)
+                                    )
+                            )
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.plain)
                 }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 16)
+                .padding(.horizontal, TigerSpacing.lg)
+                .padding(.bottom, TigerSpacing.lg)
             }
         }
-        .frame(width: 320)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .frame(width: 300)
+        .background(TigerPalette.backgroundSecondary)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(TigerPalette.border, lineWidth: 1)
+        )
+    }
+    
+    private var severityColor: Color {
+        switch nudge.severity {
+        case .green: return TigerPalette.jade
+        case .yellow: return TigerPalette.gold
+        case .red: return TigerPalette.coral
+        case .gray: return TigerPalette.textMuted
+        }
     }
 }

@@ -1,6 +1,8 @@
 import SwiftUI
 import Charts
 
+// MARK: - Data Models
+
 struct DailyAnalytics {
     var focusScore: Int = 0
     var deepWorkMinutes: Int = 0
@@ -47,10 +49,12 @@ enum ActivityType: String, CaseIterable {
         case .communication: return TigerPalette.mist
         case .shallowWork: return TigerPalette.gold
         case .distraction: return TigerPalette.coral
-        case .breakTime: return Color.white.opacity(0.35)
+        case .breakTime: return TigerPalette.textMuted
         }
     }
 }
+
+// MARK: - Dashboard View
 
 struct DashboardView: View {
     @Bindable var appState: AppState
@@ -64,62 +68,75 @@ struct DashboardView: View {
 
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
-            VStack(spacing: 22) {
-                heroSection
+            VStack(spacing: TigerSpacing.xl) {
+                // Header Section
+                headerSection
+                
+                // Permission Banner (if needed)
                 if !appState.hasScreenRecordingPermission {
                     PermissionBanner {
                         screenCapture.requestPermission()
                     }
                 }
+                
+                // Metrics Row
                 metricsRow
-                HStack(alignment: .top, spacing: 20) {
+                
+                // Main Content: Timeline + Breakdown
+                HStack(alignment: .top, spacing: TigerSpacing.lg) {
                     timelineSection
                     breakdownSection
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-                HStack(alignment: .top, spacing: 20) {
+                
+                // Secondary Content: Report + Trends
+                HStack(alignment: .top, spacing: TigerSpacing.lg) {
                     reportCard
                     weeklyTrends
                 }
             }
-            .padding(24)
+            .padding(TigerSpacing.xxl)
         }
         .task {
             await loadData()
         }
     }
 
-    private var heroSection: some View {
-        TigerPanel(padding: 24, cornerRadius: 30, emphasis: 1.2) {
-            HStack(alignment: .center, spacing: 26) {
-                VStack(alignment: .leading, spacing: 16) {
-                    TigerSectionHeader(
-                        eyebrow: "Mission Control",
-                        title: greeting,
-                        detail: "\(Date().formatted(.dateTime.weekday(.wide).month(.wide).day())) • \(dashboardSummary)"
+    // MARK: - Header Section
+    
+    private var headerSection: some View {
+        HStack(alignment: .center, spacing: TigerSpacing.xxl) {
+            // Left: Greeting and Status
+            VStack(alignment: .leading, spacing: TigerSpacing.lg) {
+                VStack(alignment: .leading, spacing: TigerSpacing.sm) {
+                    Text(greeting)
+                        .font(TigerTypography.displayMedium)
+                        .foregroundColor(TigerPalette.textPrimary)
+                    
+                    Text("\(Date().formatted(.dateTime.weekday(.wide).month(.wide).day()))")
+                        .font(TigerTypography.body)
+                        .foregroundColor(TigerPalette.textSecondary)
+                }
+                
+                HStack(spacing: TigerSpacing.sm) {
+                    TigerCapsuleBadge(
+                        title: appState.isTracking ? "Live" : "Paused",
+                        symbol: appState.isTracking ? "waveform.path.ecg" : "pause.fill",
+                        tint: appState.isTracking ? TigerPalette.jade : TigerPalette.textMuted
                     )
-
-                    HStack(spacing: 10) {
-                        TigerCapsuleBadge(
-                            title: appState.isTracking ? "Live Capture" : "Paused",
-                            symbol: appState.isTracking ? "waveform.path.ecg.rectangle.fill" : "pause.fill",
-                            tint: appState.isTracking ? TigerPalette.jade : TigerPalette.textSecondary
-                        )
-
-                        TigerCapsuleBadge(
-                            title: appState.isIdle ? "Idle detected" : "Present",
-                            symbol: appState.isIdle ? "moon.zzz.fill" : "cursorarrow.motionlines",
-                            tint: appState.isIdle ? TigerPalette.gold : TigerPalette.mist
-                        )
-                    }
-
-                    HStack(spacing: 12) {
-                        dashboardButton(
-                            title: appState.isTracking ? "Pause Tracking" : "Start Tracking",
-                            symbol: appState.isTracking ? "pause.fill" : "record.circle.fill",
-                            tint: appState.isTracking ? TigerPalette.coral : TigerPalette.jade
-                        ) {
+                    
+                    TigerCapsuleBadge(
+                        title: appState.isIdle ? "Idle" : "Active",
+                        symbol: appState.isIdle ? "moon.zzz.fill" : "cursorarrow.motionlines",
+                        tint: appState.isIdle ? TigerPalette.amber : TigerPalette.mist
+                    )
+                }
+                
+                HStack(spacing: TigerSpacing.sm) {
+                    TigerSecondaryButton(
+                        title: appState.isTracking ? "Pause" : "Start",
+                        icon: appState.isTracking ? "pause.fill" : "play.fill"
+                    ) {
+                        withAnimation(.tigerSpring) {
                             appState.isTracking.toggle()
                             if appState.isTracking {
                                 screenCapture.start(appState: appState)
@@ -127,73 +144,86 @@ struct DashboardView: View {
                                 screenCapture.stop()
                             }
                         }
-
-                        dashboardButton(
-                            title: "Refresh",
-                            symbol: "arrow.clockwise",
-                            tint: TigerPalette.gold
-                        ) {
-                            Task { await loadData() }
-                        }
+                    }
+                    
+                    TigerSecondaryButton(title: "Refresh", icon: "arrow.clockwise") {
+                        Task { await loadData() }
                     }
                 }
-
-                Spacer(minLength: 8)
-
-                scoreOrb
             }
+            
+            Spacer()
+            
+            // Right: Focus Score Orb (smaller)
+            scoreOrb
         }
+        .padding(TigerSpacing.xxl)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(TigerPalette.surface)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .strokeBorder(TigerPalette.border, lineWidth: 1)
+                )
+        )
     }
 
+    // MARK: - Score Orb (Smaller)
+    
     private var scoreOrb: some View {
         ZStack {
+            // Subtle glow
             Circle()
                 .fill(
                     RadialGradient(
                         colors: [
-                            TigerPalette.gold.opacity(0.32),
-                            TigerPalette.coral.opacity(0.12),
+                            TigerPalette.gold.opacity(0.2),
                             Color.clear
                         ],
                         center: .center,
                         startRadius: 10,
-                        endRadius: 110
+                        endRadius: 80
                     )
                 )
-                .frame(width: 220, height: 220)
+                .frame(width: 160, height: 160)
 
+            // Track
             Circle()
-                .stroke(Color.white.opacity(0.06), lineWidth: 16)
-                .frame(width: 188, height: 188)
+                .stroke(TigerPalette.border, lineWidth: 12)
+                .frame(width: 130, height: 130)
 
+            // Progress ring
             Circle()
                 .trim(from: 0, to: focusRingProgress)
                 .stroke(
-                    AngularGradient(
-                        colors: [TigerPalette.mist, TigerPalette.gold, TigerPalette.coral],
-                        center: .center
+                    LinearGradient(
+                        colors: [TigerPalette.mist, TigerPalette.gold],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
                     ),
-                    style: StrokeStyle(lineWidth: 16, lineCap: .round)
+                    style: StrokeStyle(lineWidth: 12, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
-                .frame(width: 188, height: 188)
-                .shadow(color: TigerPalette.gold.opacity(0.3), radius: 16, x: 0, y: 10)
+                .frame(width: 130, height: 130)
 
-            VStack(spacing: 6) {
+            // Score display
+            VStack(spacing: TigerSpacing.xs) {
                 Text("\(daily.focusScore)")
-                    .font(.system(size: 58, weight: .bold, design: .rounded))
+                    .font(.system(size: 42, weight: .bold, design: .rounded))
                     .foregroundColor(TigerPalette.textPrimary)
 
-                Text("Focus score")
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                Text("Focus")
+                    .font(TigerTypography.caption)
                     .foregroundColor(TigerPalette.textSecondary)
             }
         }
-        .frame(width: 230, height: 230)
+        .frame(width: 160, height: 160)
     }
 
+    // MARK: - Metrics Row
+    
     private var metricsRow: some View {
-        HStack(spacing: 18) {
+        HStack(spacing: TigerSpacing.lg) {
             TigerMetricTile(
                 label: "Deep Work",
                 value: daily.deepWorkMinutes.tigerClock,
@@ -221,20 +251,27 @@ struct DashboardView: View {
         }
     }
 
+    // MARK: - Timeline Section
+    
     private var timelineSection: some View {
-        TigerPanel(padding: 22, cornerRadius: 28) {
-            VStack(alignment: .leading, spacing: 18) {
-                TigerSectionHeader(
-                    eyebrow: "Rhythm",
-                    title: "Day Timeline",
-                    detail: "A clean read on how the day has been segmented."
-                )
+        TigerPanel(padding: TigerSpacing.xl, cornerRadius: 16) {
+            VStack(alignment: .leading, spacing: TigerSpacing.lg) {
+                VStack(alignment: .leading, spacing: TigerSpacing.xs) {
+                    Text("DAY TIMELINE")
+                        .font(TigerTypography.overline)
+                        .tracking(1.2)
+                        .foregroundColor(TigerPalette.textMuted)
+                    
+                    Text("Today's rhythm")
+                        .font(TigerTypography.title)
+                        .foregroundColor(TigerPalette.textPrimary)
+                }
 
                 if timeline.isEmpty && !isLoading {
-                    emptyState(message: "Tracking will paint today’s rhythm once screenshots begin.")
+                    emptyState(message: "Tracking will paint today's rhythm once screenshots begin.")
                 } else {
                     TimelineBar(blocks: timeline)
-                        .frame(height: 54)
+                        .frame(height: 64)
 
                     HStack {
                         Text("Start")
@@ -243,7 +280,7 @@ struct DashboardView: View {
                         Spacer()
                         Text("Now")
                     }
-                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .font(TigerTypography.caption)
                     .foregroundColor(TigerPalette.textMuted)
                 }
             }
@@ -252,60 +289,67 @@ struct DashboardView: View {
         .frame(maxWidth: .infinity)
     }
 
+    // MARK: - Breakdown Section
+    
     private var breakdownSection: some View {
-        TigerPanel(padding: 22, cornerRadius: 28) {
-            VStack(alignment: .leading, spacing: 18) {
-                TigerSectionHeader(
-                    eyebrow: "Composition",
-                    title: "Attention Breakdown",
-                    detail: "Where the day is actually going."
-                )
+        TigerPanel(padding: TigerSpacing.xl, cornerRadius: 16) {
+            VStack(alignment: .leading, spacing: TigerSpacing.lg) {
+                VStack(alignment: .leading, spacing: TigerSpacing.xs) {
+                    Text("BREAKDOWN")
+                        .font(TigerTypography.overline)
+                        .tracking(1.2)
+                        .foregroundColor(TigerPalette.textMuted)
+                    
+                    Text("Attention split")
+                        .font(TigerTypography.title)
+                        .foregroundColor(TigerPalette.textPrimary)
+                }
 
                 if daily.categories.isEmpty && !isLoading {
                     emptyState(message: "No captured activity yet.")
                 } else {
-                    HStack(spacing: 22) {
+                    HStack(spacing: TigerSpacing.xl) {
                         Chart(daily.categories) { cat in
                             SectorMark(
                                 angle: .value("Minutes", cat.minutes),
-                                innerRadius: .ratio(0.62),
+                                innerRadius: .ratio(0.65),
                                 angularInset: 2
                             )
                             .foregroundStyle(cat.type.color)
-                            .cornerRadius(8)
+                            .cornerRadius(6)
                         }
-                        .frame(width: 180, height: 180)
+                        .frame(width: 140, height: 140)
 
-                        VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: TigerSpacing.sm) {
                             ForEach(daily.categories) { cat in
-                                HStack(spacing: 10) {
+                                HStack(spacing: TigerSpacing.sm) {
                                     Circle()
                                         .fill(cat.type.color)
-                                        .frame(width: 10, height: 10)
+                                        .frame(width: 8, height: 8)
 
                                     Text(cat.name)
-                                        .font(.system(size: 13, weight: .medium))
+                                        .font(TigerTypography.bodySmall)
                                         .foregroundColor(TigerPalette.textPrimary)
 
                                     Spacer()
 
                                     Text(cat.minutes.tigerDuration)
-                                        .font(.system(size: 12, weight: .semibold, design: .rounded))
-                                        .foregroundColor(TigerPalette.textSecondary)
+                                        .font(TigerTypography.caption)
+                                        .foregroundColor(TigerPalette.textMuted)
                                 }
                             }
 
                             if !daily.topDistractors.isEmpty {
                                 TigerDivider()
-                                    .padding(.vertical, 2)
+                                    .padding(.vertical, TigerSpacing.xs)
 
-                                Text("Top distractors")
-                                    .font(.system(size: 11, weight: .bold, design: .rounded))
-                                    .tracking(1.2)
+                                Text("TOP DISTRACTORS")
+                                    .font(TigerTypography.overline)
+                                    .tracking(1)
                                     .foregroundColor(TigerPalette.textMuted)
 
-                                Text(daily.topDistractors.joined(separator: " • "))
-                                    .font(.system(size: 13, weight: .medium))
+                                Text(daily.topDistractors.joined(separator: " / "))
+                                    .font(TigerTypography.bodySmall)
                                     .foregroundColor(TigerPalette.textSecondary)
                             }
                         }
@@ -314,32 +358,39 @@ struct DashboardView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(width: 420)
+        .frame(width: 380)
     }
 
+    // MARK: - Report Card
+    
     private var reportCard: some View {
-        TigerPanel(padding: 22, cornerRadius: 28, emphasis: 1.15) {
-            VStack(alignment: .leading, spacing: 18) {
-                TigerSectionHeader(
-                    eyebrow: "Verdict",
-                    title: "Mom’s Report Card",
-                    detail: daily.hasReport ? "Generated from today’s real behavior." : "This appears after 6 PM when enough data exists."
-                )
+        TigerPanel(padding: TigerSpacing.xl, cornerRadius: 16) {
+            VStack(alignment: .leading, spacing: TigerSpacing.lg) {
+                VStack(alignment: .leading, spacing: TigerSpacing.xs) {
+                    Text("REPORT CARD")
+                        .font(TigerTypography.overline)
+                        .tracking(1.2)
+                        .foregroundColor(TigerPalette.textMuted)
+                    
+                    Text("Mom's verdict")
+                        .font(TigerTypography.title)
+                        .foregroundColor(TigerPalette.textPrimary)
+                }
 
                 if daily.hasReport {
-                    HStack(alignment: .top, spacing: 18) {
+                    HStack(alignment: .top, spacing: TigerSpacing.lg) {
                         Text(daily.momGrade)
-                            .font(.system(size: 56, weight: .bold, design: .rounded))
+                            .font(.system(size: 48, weight: .bold, design: .rounded))
                             .foregroundColor(gradeColor(daily.momGrade))
-                            .frame(width: 84)
+                            .frame(width: 70)
 
                         Text(daily.momCommentary)
-                            .font(.system(size: 15, weight: .medium))
+                            .font(TigerTypography.body)
                             .foregroundColor(TigerPalette.textPrimary)
-                            .lineSpacing(5)
+                            .lineSpacing(4)
                     }
                 } else {
-                    emptyState(message: "Tiger Mom is still collecting evidence before issuing judgment.")
+                    emptyState(message: "Report appears after 6 PM with enough data.")
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -347,14 +398,21 @@ struct DashboardView: View {
         .frame(maxWidth: .infinity)
     }
 
+    // MARK: - Weekly Trends
+    
     private var weeklyTrends: some View {
-        TigerPanel(padding: 22, cornerRadius: 28) {
-            VStack(alignment: .leading, spacing: 18) {
-                TigerSectionHeader(
-                    eyebrow: "Momentum",
-                    title: "Weekly Trendline",
-                    detail: "The shape of your consistency across the week."
-                )
+        TigerPanel(padding: TigerSpacing.xl, cornerRadius: 16) {
+            VStack(alignment: .leading, spacing: TigerSpacing.lg) {
+                VStack(alignment: .leading, spacing: TigerSpacing.xs) {
+                    Text("TRENDS")
+                        .font(TigerTypography.overline)
+                        .tracking(1.2)
+                        .foregroundColor(TigerPalette.textMuted)
+                    
+                    Text("Weekly momentum")
+                        .font(TigerTypography.title)
+                        .foregroundColor(TigerPalette.textPrimary)
+                }
 
                 if weekly.isEmpty && !isLoading {
                     emptyState(message: "A week of tracked behavior will surface trends here.")
@@ -366,25 +424,25 @@ struct DashboardView: View {
                                 y: .value("Focus Hours", day.focusHours)
                             )
                             .foregroundStyle(TigerPalette.gold.gradient)
-                            .cornerRadius(6)
+                            .cornerRadius(4)
 
                             LineMark(
                                 x: .value("Day", day.label),
                                 y: .value("Distraction", day.distractionPercent / 10)
                             )
                             .foregroundStyle(TigerPalette.coral)
-                            .lineStyle(StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                            .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round))
                             .symbol(.circle)
                         }
                     }
                     .chartYAxis {
                         AxisMarks(position: .leading) { value in
                             AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-                                .foregroundStyle(Color.white.opacity(0.06))
+                                .foregroundStyle(TigerPalette.border)
                             AxisValueLabel {
                                 if let v = value.as(Double.self) {
                                     Text("\(Int(v))h")
-                                        .font(.system(size: 10, weight: .medium))
+                                        .font(TigerTypography.caption)
                                         .foregroundColor(TigerPalette.textMuted)
                                 }
                             }
@@ -393,66 +451,39 @@ struct DashboardView: View {
                     .chartXAxis {
                         AxisMarks {
                             AxisValueLabel()
-                                .font(.system(size: 10, weight: .medium))
+                                .font(TigerTypography.caption)
                                 .foregroundStyle(TigerPalette.textMuted)
                         }
                     }
-                    .frame(height: 240)
+                    .frame(height: 200)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(width: 420)
+        .frame(width: 380)
     }
 
-    private func dashboardButton(title: String, symbol: String, tint: Color, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 8) {
-                Image(systemName: symbol)
-                    .font(.system(size: 12, weight: .bold))
-                Text(title)
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
-            }
-            .foregroundColor(tint)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(tint.opacity(0.12))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .strokeBorder(tint.opacity(0.2), lineWidth: 1)
-                    )
-            )
-        }
-        .buttonStyle(.plain)
-    }
-
+    // MARK: - Helpers
+    
     private func emptyState(message: String) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            TigerInlineGlyph(size: 28)
+        VStack(alignment: .leading, spacing: TigerSpacing.sm) {
+            TigerInlineGlyph(size: 24)
             Text(message)
-                .font(.system(size: 13, weight: .medium))
+                .font(TigerTypography.bodySmall)
                 .foregroundColor(TigerPalette.textSecondary)
                 .lineSpacing(3)
         }
-        .frame(maxWidth: .infinity, minHeight: 160, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: 120, alignment: .leading)
     }
 
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
         switch hour {
-        case 5..<12: return "Good morning, Tanmay"
-        case 12..<17: return "Good afternoon, Tanmay"
-        case 17..<23: return "Good evening, Tanmay"
-        default: return "Still awake, Tanmay"
+        case 5..<12: return "Good morning"
+        case 12..<17: return "Good afternoon"
+        case 17..<23: return "Good evening"
+        default: return "Still awake"
         }
-    }
-
-    private var dashboardSummary: String {
-        if isLoading { return "Refreshing your local intelligence layer." }
-        if appState.isTracking { return "Tracking is active and the sidecar is shaping the day." }
-        return "Tracking is paused. Your dashboard is ready when you are."
     }
 
     private func gradeColor(_ grade: String) -> Color {
@@ -526,11 +557,13 @@ struct DashboardView: View {
 
         isLoading = false
 
-        withAnimation(.spring(response: 1.0, dampingFraction: 0.75)) {
+        withAnimation(.spring(response: 0.8, dampingFraction: 0.7)) {
             focusRingProgress = Double(daily.focusScore) / 100.0
         }
     }
 }
+
+// MARK: - Timeline Bar
 
 struct TimelineBar: View {
     let blocks: [TimelineBlock]
@@ -539,21 +572,21 @@ struct TimelineBar: View {
         GeometryReader { geo in
             let totalMinutes = max(totalSpan, 1)
 
-            HStack(spacing: 3) {
+            HStack(spacing: 2) {
                 ForEach(blocks) { block in
                     let fraction = CGFloat(block.endMinute - block.startMinute) / CGFloat(totalMinutes)
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(block.type.color.gradient)
-                        .frame(width: max((fraction * geo.size.width) - 3, 8))
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(block.type.color)
+                        .frame(width: max((fraction * geo.size.width) - 2, 6))
                 }
             }
-            .padding(5)
+            .padding(TigerSpacing.sm)
             .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color.white.opacity(0.04))
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(TigerPalette.backgroundTertiary)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .strokeBorder(TigerPalette.border, lineWidth: 1)
                     )
             )
         }
@@ -565,39 +598,46 @@ struct TimelineBar: View {
     }
 }
 
+// MARK: - Permission Banner
+
 struct PermissionBanner: View {
     let onGrantAccess: () -> Void
 
     var body: some View {
-        TigerPanel(padding: 18, cornerRadius: 24) {
-            HStack(spacing: 16) {
-                ZStack {
-                    Circle()
-                        .fill(TigerPalette.gold.opacity(0.14))
-                        .frame(width: 42, height: 42)
-                    Image(systemName: "hand.raised.fill")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(TigerPalette.gold)
-                }
+        HStack(spacing: TigerSpacing.lg) {
+            ZStack {
+                Circle()
+                    .fill(TigerPalette.gold.opacity(0.12))
+                    .frame(width: 40, height: 40)
+                Image(systemName: "hand.raised.fill")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(TigerPalette.gold)
+            }
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Screen Recording Permission Required")
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
-                        .foregroundColor(TigerPalette.textPrimary)
-                    Text("Tiger Mom needs screen access to render the timeline, activity log, and coaching.")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(TigerPalette.textSecondary)
-                }
+            VStack(alignment: .leading, spacing: TigerSpacing.xs) {
+                Text("Screen Recording Permission Required")
+                    .font(TigerTypography.bodySmall)
+                    .fontWeight(.semibold)
+                    .foregroundColor(TigerPalette.textPrimary)
+                Text("Tiger Mom needs screen access to track your activity.")
+                    .font(TigerTypography.caption)
+                    .foregroundColor(TigerPalette.textSecondary)
+            }
 
-                Spacer()
+            Spacer()
 
-                Button("Grant Access") {
-                    onGrantAccess()
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(TigerPalette.gold)
-                .controlSize(.large)
+            TigerPrimaryButton(title: "Grant Access") {
+                onGrantAccess()
             }
         }
+        .padding(TigerSpacing.lg)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(TigerPalette.surface)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(TigerPalette.gold.opacity(0.2), lineWidth: 1)
+                )
+        )
     }
 }

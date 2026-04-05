@@ -1,5 +1,7 @@
 import SwiftUI
 
+// MARK: - Data Model
+
 struct ActivityEntry: Identifiable {
     let id: String
     let timestamp: Date
@@ -11,6 +13,8 @@ struct ActivityEntry: Identifiable {
     let confidence: Double
     let classificationReason: String
 }
+
+// MARK: - Activity View
 
 struct ActivityView: View {
     @State private var activities: [ActivityEntry] = []
@@ -24,99 +28,144 @@ struct ActivityView: View {
     private let pageSize = 50
 
     var body: some View {
-        ScrollView(.vertical, showsIndicators: false) {
-            VStack(spacing: 20) {
-                header
-                filterBar
-                activityStage
+        VStack(spacing: 0) {
+            // Header
+            activityHeader
+                .padding(.horizontal, TigerSpacing.xxl)
+                .padding(.top, TigerSpacing.xxl)
+                .padding(.bottom, TigerSpacing.lg)
+            
+            // Filter bar (sticky)
+            filterBar
+                .padding(.horizontal, TigerSpacing.xxl)
+                .padding(.bottom, TigerSpacing.lg)
+                .background(TigerPalette.background.opacity(0.8))
+            
+            // Activity list
+            ScrollView(.vertical, showsIndicators: false) {
+                activityList
+                    .padding(.horizontal, TigerSpacing.xxl)
+                    .padding(.bottom, TigerSpacing.xxl)
             }
-            .padding(24)
         }
         .task {
             await loadInitial()
         }
     }
 
-    private var header: some View {
-        TigerPanel(padding: 24, cornerRadius: 28, emphasis: 1.08) {
-            HStack(alignment: .top, spacing: 18) {
-                VStack(alignment: .leading, spacing: 12) {
-                    TigerSectionHeader(
-                        eyebrow: "Forensics",
-                        title: "Activity Log",
-                        detail: "A scrollable record of what the sidecar thinks you were doing."
-                    )
-
-                    HStack(spacing: 10) {
-                        TigerCapsuleBadge(title: "\(filteredActivities.count) visible", symbol: "line.3.horizontal.decrease.circle.fill", tint: TigerPalette.mist)
-                        TigerCapsuleBadge(title: "\(activities.count) loaded", symbol: "clock.arrow.trianglehead.counterclockwise.rotate.90", tint: TigerPalette.gold)
-                    }
-                }
-
-                Spacer()
-
-                Text(searchText.isEmpty ? "Readable, not raw." : "Filtering for “\(searchText)”")
-                    .font(.system(size: 13, weight: .medium))
+    // MARK: - Header
+    
+    private var activityHeader: some View {
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: TigerSpacing.xs) {
+                Text("Activity")
+                    .font(TigerTypography.headline)
+                    .foregroundColor(TigerPalette.textPrimary)
+                
+                Text("A scrollable record of your behavior")
+                    .font(TigerTypography.bodySmall)
                     .foregroundColor(TigerPalette.textSecondary)
+            }
+            
+            Spacer()
+            
+            HStack(spacing: TigerSpacing.sm) {
+                TigerCapsuleBadge(
+                    title: "\(filteredActivities.count) visible",
+                    symbol: "line.3.horizontal.decrease.circle.fill",
+                    tint: TigerPalette.mist
+                )
+                
+                TigerCapsuleBadge(
+                    title: "\(activities.count) loaded",
+                    symbol: "clock.arrow.trianglehead.counterclockwise.rotate.90",
+                    tint: TigerPalette.gold
+                )
             }
         }
     }
 
+    // MARK: - Filter Bar
+    
     private var filterBar: some View {
-        TigerPanel(padding: 20, cornerRadius: 24) {
-            VStack(alignment: .leading, spacing: 14) {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        FilterPill(label: "All", color: TigerPalette.mist, isSelected: selectedFilter == nil) {
+        VStack(alignment: .leading, spacing: TigerSpacing.md) {
+            // Category filters
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: TigerSpacing.sm) {
+                    FilterPill(label: "All", color: TigerPalette.mist, isSelected: selectedFilter == nil) {
+                        withAnimation(.tigerSpring) {
                             selectedFilter = nil
                         }
+                    }
 
-                        ForEach(ActivityType.allCases, id: \.rawValue) { type in
-                            FilterPill(label: type.rawValue, color: type.color, isSelected: selectedFilter == type) {
+                    ForEach(ActivityType.allCases, id: \.rawValue) { type in
+                        FilterPill(label: type.rawValue, color: type.color, isSelected: selectedFilter == type) {
+                            withAnimation(.tigerSpring) {
                                 selectedFilter = type
                             }
                         }
                     }
                 }
-
-                HStack(spacing: 10) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundColor(TigerPalette.textMuted)
-
-                    TextField("Search apps, titles, details, and context…", text: $searchText)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(TigerPalette.textPrimary)
-
-                    if !searchText.isEmpty {
-                        Button {
-                            searchText = ""
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 13))
-                                .foregroundColor(TigerPalette.textMuted)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .tigerInsetField()
             }
+
+            // Search field
+            HStack(spacing: TigerSpacing.sm) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(TigerPalette.textMuted)
+
+                TextField("Search apps, titles, details...", text: $searchText)
+                    .textFieldStyle(.plain)
+                    .font(TigerTypography.bodySmall)
+                    .foregroundColor(TigerPalette.textPrimary)
+
+                if !searchText.isEmpty {
+                    Button {
+                        searchText = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 12))
+                            .foregroundColor(TigerPalette.textMuted)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, TigerSpacing.lg)
+            .padding(.vertical, TigerSpacing.md)
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(TigerPalette.backgroundTertiary)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .strokeBorder(TigerPalette.border, lineWidth: 1)
+                    )
+            )
         }
+        .padding(TigerSpacing.lg)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(TigerPalette.surface)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(TigerPalette.border, lineWidth: 1)
+                )
+        )
     }
 
-    private var activityStage: some View {
-        TigerPanel(padding: 0, cornerRadius: 30, emphasis: 1.02) {
+    // MARK: - Activity List
+    
+    private var activityList: some View {
+        Group {
             if activities.isEmpty && !isLoading {
                 emptyState
             } else {
-                LazyVStack(spacing: 10) {
+                LazyVStack(spacing: TigerSpacing.sm) {
                     ForEach(filteredActivities) { entry in
                         ActivityRow(
                             entry: entry,
                             isExpanded: expandedId == entry.id,
                             onTap: {
-                                withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
+                                withAnimation(.tigerSpring) {
                                     expandedId = expandedId == entry.id ? nil : entry.id
                                 }
                             }
@@ -125,13 +174,13 @@ struct ActivityView: View {
 
                     if hasMore && !isLoading {
                         ProgressView()
-                            .padding(.vertical, 18)
+                            .scaleEffect(0.8)
+                            .padding(.vertical, TigerSpacing.lg)
                             .onAppear {
                                 Task { await loadMore() }
                             }
                     }
                 }
-                .padding(18)
             }
         }
     }
@@ -148,34 +197,39 @@ struct ActivityView: View {
         }
     }
 
+    // MARK: - Empty State
+    
     private var emptyState: some View {
-        VStack(spacing: 18) {
-            Spacer(minLength: 80)
+        VStack(spacing: TigerSpacing.xl) {
+            Spacer(minLength: 60)
 
             ZStack {
                 Circle()
-                    .fill(TigerPalette.amber.opacity(0.1))
-                    .frame(width: 92, height: 92)
-                TigerMark(size: 58, framed: false)
+                    .fill(TigerPalette.gold.opacity(0.1))
+                    .frame(width: 80, height: 80)
+                TigerMark(size: 50, framed: false)
             }
 
-            Text("The log is waiting.")
-                .font(.system(size: 20, weight: .semibold, design: .rounded))
-                .foregroundColor(TigerPalette.textPrimary)
+            VStack(spacing: TigerSpacing.sm) {
+                Text("The log is waiting")
+                    .font(TigerTypography.title)
+                    .foregroundColor(TigerPalette.textPrimary)
 
-            Text("Activities will appear here once tracking starts and the sidecar begins classifying screenshots.")
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(TigerPalette.textSecondary)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 420)
-                .lineSpacing(3)
+                Text("Activities will appear here once tracking starts and screenshots are classified.")
+                    .font(TigerTypography.bodySmall)
+                    .foregroundColor(TigerPalette.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 360)
+                    .lineSpacing(3)
+            }
 
-            Spacer(minLength: 80)
+            Spacer(minLength: 60)
         }
-        .frame(maxWidth: .infinity, minHeight: 520)
-        .padding(24)
+        .frame(maxWidth: .infinity, minHeight: 400)
     }
 
+    // MARK: - Data Loading
+    
     private func loadInitial() async {
         currentPage = 1
         hasMore = true
@@ -228,31 +282,39 @@ struct ActivityView: View {
     }
 }
 
+// MARK: - Filter Pill
+
 struct FilterPill: View {
     let label: String
     var color: Color = TigerPalette.gold
     let isSelected: Bool
     let action: () -> Void
+    
+    @State private var isHovered = false
 
     var body: some View {
         Button(action: action) {
             Text(label)
-                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .font(TigerTypography.caption)
                 .foregroundColor(isSelected ? color : TigerPalette.textSecondary)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 9)
+                .padding(.horizontal, TigerSpacing.md)
+                .padding(.vertical, TigerSpacing.sm)
                 .background(
                     Capsule(style: .continuous)
-                        .fill(isSelected ? color.opacity(0.14) : Color.white.opacity(0.04))
+                        .fill(isSelected ? color.opacity(0.12) : (isHovered ? TigerPalette.surfaceHover : .clear))
                         .overlay(
                             Capsule(style: .continuous)
-                                .strokeBorder(isSelected ? color.opacity(0.18) : Color.white.opacity(0.04), lineWidth: 1)
+                                .strokeBorder(isSelected ? color.opacity(0.15) : TigerPalette.border, lineWidth: 1)
                         )
                 )
         }
         .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+        .animation(.tigerQuick, value: isHovered)
     }
 }
+
+// MARK: - Activity Row
 
 struct ActivityRow: View {
     let entry: ActivityEntry
@@ -263,82 +325,99 @@ struct ActivityRow: View {
 
     var body: some View {
         Button(action: onTap) {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(spacing: 14) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(entry.category.color.opacity(0.12))
-                            .frame(width: 40, height: 40)
+            HStack(spacing: 0) {
+                // Left accent border
+                Rectangle()
+                    .fill(entry.category.color)
+                    .frame(width: 3)
+                
+                // Content
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack(spacing: TigerSpacing.md) {
+                        // App icon
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .fill(entry.category.color.opacity(0.1))
+                                .frame(width: 36, height: 36)
 
-                        Image(systemName: iconForApp(entry.appName))
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(entry.category.color)
-                    }
+                            Image(systemName: iconForApp(entry.appName))
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(entry.category.color)
+                        }
 
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack(spacing: 8) {
-                            Text(entry.appName)
-                                .font(.system(size: 14, weight: .semibold, design: .rounded))
-                                .foregroundColor(TigerPalette.textPrimary)
+                        // Details
+                        VStack(alignment: .leading, spacing: TigerSpacing.xs) {
+                            HStack(spacing: TigerSpacing.sm) {
+                                Text(entry.appName)
+                                    .font(TigerTypography.bodySmall)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(TigerPalette.textPrimary)
 
-                            if !entry.windowTitle.isEmpty {
-                                Text(entry.windowTitle)
-                                    .font(.system(size: 12, weight: .medium))
-                                    .foregroundColor(TigerPalette.textSecondary)
-                                    .lineLimit(1)
+                                if !entry.windowTitle.isEmpty {
+                                    Text(entry.windowTitle)
+                                        .font(TigerTypography.caption)
+                                        .foregroundColor(TigerPalette.textSecondary)
+                                        .lineLimit(1)
+                                }
+                            }
+
+                            if !entry.detail.isEmpty {
+                                Text(entry.detail)
+                                    .font(TigerTypography.caption)
+                                    .foregroundColor(TigerPalette.textMuted)
+                                    .lineLimit(isExpanded ? nil : 1)
                             }
                         }
 
-                        if !entry.detail.isEmpty {
-                            Text(entry.detail)
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(TigerPalette.textSecondary)
-                                .lineLimit(isExpanded ? nil : 1)
-                        }
+                        Spacer()
+
+                        // Category badge
+                        Text(entry.category.rawValue)
+                            .font(TigerTypography.overline)
+                            .foregroundColor(entry.category.color)
+                            .padding(.horizontal, TigerSpacing.sm)
+                            .padding(.vertical, TigerSpacing.xs)
+                            .background(
+                                Capsule(style: .continuous)
+                                    .fill(entry.category.color.opacity(0.1))
+                            )
+
+                        // Timestamp
+                        Text(entry.timestamp.formatted(date: .omitted, time: .shortened))
+                            .font(TigerTypography.caption)
+                            .foregroundColor(TigerPalette.textMuted)
+                            .frame(width: 60, alignment: .trailing)
                     }
 
-                    Spacer()
-
-                    Text(entry.category.rawValue)
-                        .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .foregroundColor(entry.category.color)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 7)
-                        .background(
-                            Capsule(style: .continuous)
-                                .fill(entry.category.color.opacity(0.12))
-                        )
-
-                    Text(entry.timestamp.formatted(date: .omitted, time: .shortened))
-                        .font(.system(size: 11, weight: .medium, design: .rounded))
-                        .foregroundColor(TigerPalette.textMuted)
-                        .frame(width: 72, alignment: .trailing)
+                    // Expanded details
+                    if isExpanded {
+                        expandedDetails
+                    }
                 }
-
-                if isExpanded {
-                    expandedDetails
-                }
+                .padding(.horizontal, TigerSpacing.lg)
+                .padding(.vertical, TigerSpacing.md)
             }
-            .padding(.horizontal, 18)
-            .padding(.vertical, 16)
             .background(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(isHovered ? Color.white.opacity(0.05) : Color.white.opacity(0.035))
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(isHovered ? TigerPalette.surfaceElevated : TigerPalette.surface)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 24, style: .continuous)
-                            .strokeBorder(Color.white.opacity(isExpanded ? 0.08 : 0.05), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .strokeBorder(isExpanded ? TigerPalette.borderStrong : TigerPalette.border, lineWidth: 1)
                     )
             )
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
+        .animation(.tigerQuick, value: isHovered)
     }
 
+    // MARK: - Expanded Details
+    
     private var expandedDetails: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: TigerSpacing.md) {
             TigerDivider()
-                .padding(.top, 14)
-                .padding(.bottom, 2)
+                .padding(.top, TigerSpacing.md)
 
             if !entry.detail.isEmpty {
                 detailBlock(title: "Detail", value: entry.detail)
@@ -348,32 +427,31 @@ struct ActivityRow: View {
                 detailBlock(title: "Classification reason", value: entry.classificationReason)
             }
 
-            HStack(spacing: 16) {
+            HStack(spacing: TigerSpacing.lg) {
                 if !entry.subcategory.isEmpty {
                     Label(entry.subcategory, systemImage: "tag.fill")
-                        .font(.system(size: 11, weight: .medium))
+                        .font(TigerTypography.caption)
                         .foregroundColor(TigerPalette.textSecondary)
                 }
 
                 Label("\(Int(entry.confidence * 100))% confidence", systemImage: "checkmark.seal.fill")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(TigerTypography.caption)
                     .foregroundColor(TigerPalette.textSecondary)
             }
-            .padding(.top, 2)
         }
     }
 
     private func detailBlock(title: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: TigerSpacing.xs) {
             Text(title.uppercased())
-                .font(.system(size: 10, weight: .bold, design: .rounded))
-                .tracking(1.1)
+                .font(TigerTypography.overline)
+                .tracking(1)
                 .foregroundColor(TigerPalette.textMuted)
 
             Text(value)
-                .font(.system(size: 12, weight: .medium))
+                .font(TigerTypography.caption)
                 .foregroundColor(TigerPalette.textSecondary)
-                .lineSpacing(4)
+                .lineSpacing(3)
         }
     }
 
