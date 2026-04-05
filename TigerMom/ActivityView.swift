@@ -25,12 +25,12 @@ struct ActivityView: View {
 
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
-            VStack(spacing: 20) {
+            VStack(spacing: 18) {
                 header
                 filterBar
                 activityStage
             }
-            .padding(24)
+            .padding(22)
         }
         .task {
             await loadInitial()
@@ -38,7 +38,7 @@ struct ActivityView: View {
     }
 
     private var header: some View {
-        TigerPanel(padding: 24, cornerRadius: 28, emphasis: 1.08) {
+        TigerPanel(padding: 24, cornerRadius: 26, emphasis: 1.0) {
             HStack(alignment: .top, spacing: 18) {
                 VStack(alignment: .leading, spacing: 12) {
                     TigerSectionHeader(
@@ -56,14 +56,14 @@ struct ActivityView: View {
                 Spacer()
 
                 Text(searchText.isEmpty ? "Readable, not raw." : "Filtering for “\(searchText)”")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.system(size: 13, weight: .regular))
                     .foregroundColor(TigerPalette.textSecondary)
             }
         }
     }
 
     private var filterBar: some View {
-        TigerPanel(padding: 20, cornerRadius: 24) {
+        TigerPanel(padding: 20, cornerRadius: 22) {
             VStack(alignment: .leading, spacing: 14) {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
@@ -106,7 +106,7 @@ struct ActivityView: View {
     }
 
     private var activityStage: some View {
-        TigerPanel(padding: 0, cornerRadius: 30, emphasis: 1.02) {
+        TigerPanel(padding: 0, cornerRadius: 28, emphasis: 1.0) {
             if activities.isEmpty && !isLoading {
                 emptyState
             } else {
@@ -164,11 +164,11 @@ struct ActivityView: View {
                 .foregroundColor(TigerPalette.textPrimary)
 
             Text("Activities will appear here once tracking starts and the sidecar begins classifying screenshots.")
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: 13, weight: .regular))
                 .foregroundColor(TigerPalette.textSecondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 420)
-                .lineSpacing(3)
+                .lineSpacing(2)
 
             Spacer(minLength: 80)
         }
@@ -238,19 +238,8 @@ struct FilterPill: View {
         Button(action: action) {
             Text(label)
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
-                .foregroundColor(isSelected ? color : TigerPalette.textSecondary)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 9)
-                .background(
-                    Capsule(style: .continuous)
-                        .fill(isSelected ? color.opacity(0.14) : Color.white.opacity(0.04))
-                        .overlay(
-                            Capsule(style: .continuous)
-                                .strokeBorder(isSelected ? color.opacity(0.18) : Color.white.opacity(0.04), lineWidth: 1)
-                        )
-                )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(TigerPillButtonStyle(tint: color, isSelected: isSelected))
     }
 }
 
@@ -266,8 +255,8 @@ struct ActivityRow: View {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 14) {
                     ZStack {
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(entry.category.color.opacity(0.12))
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(entry.category.color.opacity(0.1))
                             .frame(width: 40, height: 40)
 
                         Image(systemName: iconForApp(entry.appName))
@@ -283,7 +272,7 @@ struct ActivityRow: View {
 
                             if !entry.windowTitle.isEmpty {
                                 Text(entry.windowTitle)
-                                    .font(.system(size: 12, weight: .medium))
+                                    .font(.system(size: 12, weight: .regular))
                                     .foregroundColor(TigerPalette.textSecondary)
                                     .lineLimit(1)
                             }
@@ -291,7 +280,7 @@ struct ActivityRow: View {
 
                         if !entry.detail.isEmpty {
                             Text(entry.detail)
-                                .font(.system(size: 12, weight: .medium))
+                                .font(.system(size: 12, weight: .regular))
                                 .foregroundColor(TigerPalette.textSecondary)
                                 .lineLimit(isExpanded ? nil : 1)
                         }
@@ -306,7 +295,7 @@ struct ActivityRow: View {
                         .padding(.vertical, 7)
                         .background(
                             Capsule(style: .continuous)
-                                .fill(entry.category.color.opacity(0.12))
+                                .fill(entry.category.color.opacity(0.1))
                         )
 
                     Text(entry.timestamp.formatted(date: .omitted, time: .shortened))
@@ -322,10 +311,10 @@ struct ActivityRow: View {
             .padding(.horizontal, 18)
             .padding(.vertical, 16)
             .background(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(isHovered ? Color.white.opacity(0.05) : Color.white.opacity(0.035))
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .fill(isHovered ? Color.white.opacity(0.045) : Color.white.opacity(0.03))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        RoundedRectangle(cornerRadius: 22, style: .continuous)
                             .strokeBorder(Color.white.opacity(isExpanded ? 0.08 : 0.05), lineWidth: 1)
                     )
             )
@@ -371,7 +360,7 @@ struct ActivityRow: View {
                 .foregroundColor(TigerPalette.textMuted)
 
             Text(value)
-                .font(.system(size: 12, weight: .medium))
+                .font(.system(size: 12, weight: .regular))
                 .foregroundColor(TigerPalette.textSecondary)
                 .lineSpacing(4)
         }

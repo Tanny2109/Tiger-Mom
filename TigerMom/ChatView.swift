@@ -70,7 +70,7 @@ struct ChatView: View {
     ]
 
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 18) {
             header
 
             HStack(alignment: .top, spacing: 20) {
@@ -79,14 +79,14 @@ struct ChatView: View {
                     .frame(width: 320)
             }
         }
-        .padding(24)
+        .padding(22)
         .task {
             await refreshAll()
         }
     }
 
     private var header: some View {
-        TigerPanel(padding: 24, cornerRadius: 28, emphasis: 1.1) {
+        TigerPanel(padding: 24, cornerRadius: 26, emphasis: 1.0) {
             HStack(alignment: .top, spacing: 18) {
                 VStack(alignment: .leading, spacing: 12) {
                     TigerSectionHeader(
@@ -111,20 +111,28 @@ struct ChatView: View {
                 Spacer()
 
                 HStack(spacing: 10) {
-                    headerButton(title: "Refresh", symbol: "arrow.clockwise", tint: TigerPalette.gold) {
+                    Button {
                         Task { await refreshAll() }
+                    } label: {
+                        Label("Refresh", systemImage: "arrow.clockwise")
+                            .font(.system(size: 13, weight: .semibold, design: .rounded))
                     }
+                    .buttonStyle(TigerButtonStyle(tint: TigerPalette.gold, prominence: .quiet))
 
-                    headerButton(title: "New Thread", symbol: "plus.bubble.fill", tint: TigerPalette.mist) {
+                    Button {
                         startFreshChat()
+                    } label: {
+                        Label("New Thread", systemImage: "plus.bubble.fill")
+                            .font(.system(size: 13, weight: .semibold, design: .rounded))
                     }
+                    .buttonStyle(TigerButtonStyle(tint: TigerPalette.jade, prominence: .secondary))
                 }
             }
         }
     }
 
     private var conversationStage: some View {
-        TigerPanel(padding: 0, cornerRadius: 30, emphasis: 1.05) {
+        TigerPanel(padding: 0, cornerRadius: 28, emphasis: 1.0) {
             VStack(spacing: 0) {
                 promptRail
                     .padding(20)
@@ -172,7 +180,7 @@ struct ChatView: View {
     private var promptRail: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Quick prompts")
-                .font(.system(size: 11, weight: .bold, design: .rounded))
+                .font(.system(size: 11, weight: .semibold, design: .rounded))
                 .tracking(1.2)
                 .foregroundColor(TigerPalette.textMuted)
 
@@ -184,19 +192,8 @@ struct ChatView: View {
                         } label: {
                             Text(prompt)
                                 .font(.system(size: 12, weight: .semibold, design: .rounded))
-                                .foregroundColor(TigerPalette.textPrimary)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 9)
-                                .background(
-                                    Capsule(style: .continuous)
-                                        .fill(Color.white.opacity(0.05))
-                                        .overlay(
-                                            Capsule(style: .continuous)
-                                                .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
-                                        )
-                                )
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(TigerPillButtonStyle())
                     }
                 }
             }
@@ -209,7 +206,7 @@ struct ChatView: View {
                 Circle()
                     .fill(
                         LinearGradient(
-                            colors: [TigerPalette.amber.opacity(0.18), TigerPalette.gold.opacity(0.08)],
+                            colors: [Color.white.opacity(0.08), TigerPalette.amber.opacity(0.06)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -225,11 +222,11 @@ struct ChatView: View {
                     .foregroundColor(TigerPalette.textPrimary)
 
                 Text("Tiger Mom can read your local activity history and respond with actual context, not generic advice.")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.system(size: 13, weight: .regular))
                     .foregroundColor(TigerPalette.textSecondary)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: 420)
-                    .lineSpacing(3)
+                    .lineSpacing(2)
             }
         }
         .frame(maxWidth: .infinity)
@@ -239,7 +236,7 @@ struct ChatView: View {
         VStack(spacing: 12) {
             ProgressView()
             Text("Checking in with Tiger Mom...")
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: 13, weight: .regular))
                 .foregroundColor(TigerPalette.textSecondary)
         }
         .frame(maxWidth: .infinity)
@@ -256,10 +253,10 @@ struct ChatView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
                     .background(
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .fill(Color.white.opacity(0.05))
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .fill(Color.white.opacity(0.04))
                             .overlay(
-                                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                RoundedRectangle(cornerRadius: 18, style: .continuous)
                                     .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
                             )
                     )
@@ -278,23 +275,16 @@ struct ChatView: View {
                     Task { await sendMessage() }
                 } label: {
                     Image(systemName: "arrow.up")
-                        .font(.system(size: 17, weight: .bold))
-                        .foregroundColor(canSend ? TigerPalette.background : TigerPalette.textMuted)
-                        .frame(width: 46, height: 46)
-                        .background(
-                            Group {
-                                if canSend {
-                                    Circle()
-                                        .fill(TigerPalette.gold.gradient)
-                                } else {
-                                    Circle()
-                                        .fill(Color.white.opacity(0.06))
-                                }
-                            }
-                        )
-                        .shadow(color: canSend ? TigerPalette.gold.opacity(0.26) : .clear, radius: 14, x: 0, y: 10)
+                        .font(.system(size: 15, weight: .bold))
+                        .frame(width: 42, height: 42)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(
+                    TigerButtonStyle(
+                        tint: canSend ? TigerPalette.gold : TigerPalette.textSecondary,
+                        prominence: canSend ? .primary : .quiet,
+                        cornerRadius: 21
+                    )
+                )
                 .disabled(!canSend)
                 .keyboardShortcut(.return, modifiers: [.command])
 
@@ -307,7 +297,7 @@ struct ChatView: View {
 
     private var contextRail: some View {
         VStack(spacing: 18) {
-            TigerPanel(padding: 20, cornerRadius: 26) {
+            TigerPanel(padding: 20, cornerRadius: 24) {
                 VStack(alignment: .leading, spacing: 14) {
                     TigerSectionHeader(
                         eyebrow: "Today",
@@ -322,7 +312,7 @@ struct ChatView: View {
                 }
             }
 
-            TigerPanel(padding: 20, cornerRadius: 26) {
+            TigerPanel(padding: 20, cornerRadius: 24) {
                 VStack(alignment: .leading, spacing: 14) {
                     TigerSectionHeader(
                         eyebrow: "Presence",
@@ -340,7 +330,7 @@ struct ChatView: View {
                 }
             }
 
-            TigerPanel(padding: 20, cornerRadius: 26) {
+            TigerPanel(padding: 20, cornerRadius: 24) {
                 VStack(alignment: .leading, spacing: 12) {
                     TigerSectionHeader(
                         eyebrow: "Notes",
@@ -368,29 +358,6 @@ struct ChatView: View {
 
     private var canSend: Bool {
         !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !isSending
-    }
-
-    private func headerButton(title: String, symbol: String, tint: Color, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 8) {
-                Image(systemName: symbol)
-                    .font(.system(size: 12, weight: .bold))
-                Text(title)
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
-            }
-            .foregroundColor(tint)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(tint.opacity(0.12))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .strokeBorder(tint.opacity(0.18), lineWidth: 1)
-                    )
-            )
-        }
-        .buttonStyle(.plain)
     }
 
     private func sendMessage() async {
@@ -505,7 +472,7 @@ struct ChatView: View {
                     .fill(tint)
                     .frame(width: 8, height: 8)
                 Text(label)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.system(size: 13, weight: .regular))
                     .foregroundColor(TigerPalette.textSecondary)
             }
 
@@ -518,15 +485,7 @@ struct ChatView: View {
     }
 
     private func sessionLine(label: String, value: String) -> some View {
-        HStack {
-            Text(label)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(TigerPalette.textSecondary)
-            Spacer()
-            Text(value)
-                .font(.system(size: 13, weight: .semibold, design: .rounded))
-                .foregroundColor(TigerPalette.textPrimary)
-        }
+        TigerLabeledValueRow(label: label, value: value)
     }
 }
 
@@ -541,7 +500,7 @@ struct MessageBubble: View {
 
             VStack(alignment: message.isUser ? .trailing : .leading, spacing: 6) {
                 Text(message.content)
-                    .font(.system(size: 15, weight: .medium))
+                    .font(.system(size: 15, weight: .regular))
                     .foregroundColor(message.isUser ? TigerPalette.background : TigerPalette.textPrimary)
                     .lineSpacing(4)
                     .padding(.horizontal, 16)
@@ -550,10 +509,14 @@ struct MessageBubble: View {
                         Group {
                             if message.isUser {
                                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                    .fill(TigerPalette.gold.gradient)
+                                    .fill(TigerPalette.gold.opacity(0.24))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                            .strokeBorder(TigerPalette.gold.opacity(0.22), lineWidth: 1)
+                                    )
                             } else {
                                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                    .fill(Color.white.opacity(0.06))
+                                    .fill(Color.white.opacity(0.045))
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 20, style: .continuous)
                                             .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
@@ -576,23 +539,7 @@ struct ConnectionBadge: View {
     let status: ChatConnectionStatus
 
     var body: some View {
-        HStack(spacing: 7) {
-            Image(systemName: status.symbol)
-                .font(.system(size: 11, weight: .bold))
-            Text(status.label)
-                .font(.system(size: 11, weight: .bold, design: .rounded))
-        }
-        .foregroundColor(status.tint)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
-        .background(
-            Capsule(style: .continuous)
-                .fill(status.tint.opacity(0.12))
-                .overlay(
-                    Capsule(style: .continuous)
-                        .strokeBorder(status.tint.opacity(0.18), lineWidth: 1)
-                )
-        )
+        TigerCapsuleBadge(title: status.label, symbol: status.symbol, tint: status.tint)
     }
 }
 
@@ -616,7 +563,7 @@ struct TypingIndicator: View {
             .padding(.vertical, 14)
             .background(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(Color.white.opacity(0.06))
+                    .fill(Color.white.opacity(0.045))
                     .overlay(
                         RoundedRectangle(cornerRadius: 18, style: .continuous)
                             .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)

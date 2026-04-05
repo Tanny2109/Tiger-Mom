@@ -31,7 +31,7 @@ struct SettingsView: View {
 
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
-            VStack(spacing: 20) {
+            VStack(spacing: 18) {
                 header
 
                 HStack(alignment: .top, spacing: 20) {
@@ -51,7 +51,7 @@ struct SettingsView: View {
                     .frame(maxWidth: .infinity)
                 }
             }
-            .padding(24)
+            .padding(22)
         }
         .task {
             await loadSettings()
@@ -60,7 +60,7 @@ struct SettingsView: View {
     }
 
     private var header: some View {
-        TigerPanel(padding: 24, cornerRadius: 28, emphasis: 1.08) {
+        TigerPanel(padding: 24, cornerRadius: 26, emphasis: 1.0) {
             HStack(alignment: .top, spacing: 18) {
                 TigerSectionHeader(
                     eyebrow: "Configuration",
@@ -73,7 +73,7 @@ struct SettingsView: View {
                 VStack(alignment: .trailing, spacing: 10) {
                     TigerCapsuleBadge(title: isSaving ? "Saving" : "Live Sync", symbol: isSaving ? "arrow.triangle.2.circlepath" : "checkmark.circle.fill", tint: isSaving ? TigerPalette.gold : TigerPalette.jade)
                     Text("Changes sync to the sidecar as you go.")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(.system(size: 12, weight: .regular))
                         .foregroundColor(TigerPalette.textSecondary)
                 }
             }
@@ -101,19 +101,8 @@ struct SettingsView: View {
                             Text("Test Key")
                                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                         }
-                        .foregroundColor(TigerPalette.textPrimary)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 11)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(Color.white.opacity(0.05))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                        .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
-                                )
-                        )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(TigerButtonStyle(tint: TigerPalette.jade, prominence: .quiet))
                 }
 
                 Button {
@@ -212,14 +201,14 @@ struct SettingsView: View {
                 .onChange(of: intensity) { saveSettings() }
 
                 Text(intensityPreview)
-                    .font(.system(size: 13, weight: .medium, design: .serif))
+                    .font(.system(size: 13, weight: .regular, design: .serif))
                     .foregroundColor(TigerPalette.textPrimary)
                     .lineSpacing(4)
                     .padding(14)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(
                         RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .fill(Color.white.opacity(0.04))
+                            .fill(Color.white.opacity(0.035))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 18, style: .continuous)
                                     .strokeBorder(Color.white.opacity(0.05), lineWidth: 1)
@@ -248,14 +237,14 @@ struct SettingsView: View {
                         .foregroundColor(TigerPalette.jade)
 
                     Text("All activity data stays on your Mac unless a model call needs it.")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.system(size: 13, weight: .regular))
                         .foregroundColor(TigerPalette.textSecondary)
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
                     SettingsLabel("Screenshot storage path")
                     Text("/Users/tanmay/Projects/TigerMom/screenshots")
-                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        .font(.system(size: 12, weight: .regular, design: .monospaced))
                         .foregroundColor(TigerPalette.textSecondary)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 12)
@@ -315,7 +304,7 @@ struct SettingsView: View {
                 }
 
                 Text("An AI-powered productivity monitor that watches your screen, interprets your behavior, and gives you sharp, contextual coaching in real time.")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.system(size: 13, weight: .regular))
                     .foregroundColor(TigerPalette.textSecondary)
                     .lineSpacing(4)
             }
@@ -326,38 +315,16 @@ struct SettingsView: View {
         Button(action: action) {
             Label(title, systemImage: symbol)
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
-                .foregroundColor(TigerPalette.coral)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 11)
-                .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(TigerPalette.coral.opacity(0.12))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .strokeBorder(TigerPalette.coral.opacity(0.18), lineWidth: 1)
-                        )
-                )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(TigerButtonStyle(tint: TigerPalette.coral, prominence: .secondary))
     }
 
     private func neutralButton(title: String, symbol: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Label(title, systemImage: symbol)
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
-                .foregroundColor(TigerPalette.textPrimary)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 11)
-                .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(Color.white.opacity(0.05))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
-                        )
-                )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(TigerButtonStyle(tint: TigerPalette.textPrimary, prominence: .quiet))
     }
 
     private func loadSettings() async {
@@ -480,12 +447,12 @@ struct SettingsCard<Content: View>: View {
     @ViewBuilder let content: () -> Content
 
     var body: some View {
-        TigerPanel(padding: 22, cornerRadius: 28) {
+        TigerPanel(padding: 22, cornerRadius: 24) {
             VStack(alignment: .leading, spacing: 18) {
                 HStack(spacing: 12) {
                     ZStack {
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(TigerPalette.gold.opacity(0.12))
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(TigerPalette.gold.opacity(0.1))
                             .frame(width: 34, height: 34)
 
                         Image(systemName: icon)
@@ -498,7 +465,7 @@ struct SettingsCard<Content: View>: View {
                             .font(.system(size: 16, weight: .semibold, design: .rounded))
                             .foregroundColor(TigerPalette.textPrimary)
                         Text(detail)
-                            .font(.system(size: 12, weight: .medium))
+                            .font(.system(size: 12, weight: .regular))
                             .foregroundColor(TigerPalette.textSecondary)
                     }
                 }
@@ -533,7 +500,7 @@ struct SettingsToggle: View {
     var body: some View {
         Toggle(isOn: $isOn) {
             Text(label)
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: 13, weight: .regular))
                 .foregroundColor(TigerPalette.textPrimary)
         }
         .toggleStyle(.switch)
@@ -554,7 +521,7 @@ struct SettingsSlider: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(label)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.system(size: 13, weight: .regular))
                     .foregroundColor(TigerPalette.textPrimary)
                 Spacer()
                 Text(format(value))

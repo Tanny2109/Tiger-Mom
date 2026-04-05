@@ -8,26 +8,22 @@ struct ContentView: View {
         ZStack {
             TigerAppBackground()
 
-            HStack(spacing: 18) {
+            HStack(spacing: 16) {
                 SidebarView(appState: appState, screenCapture: screenCapture)
-                    .frame(width: 260)
+                    .frame(width: 252)
 
                 contentStage
             }
-            .padding(18)
+            .padding(16)
         }
         .preferredColorScheme(.dark)
     }
 
     @ViewBuilder
     private var contentStage: some View {
-        TigerPanel(padding: 0, cornerRadius: 34, emphasis: 1.1) {
+        TigerPanel(padding: 0, cornerRadius: 30, emphasis: 1.0) {
             ZStack {
-                LinearGradient(
-                    colors: [Color.white.opacity(0.03), Color.clear],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
+                Color.white.opacity(0.015)
 
                 switch appState.selectedTab {
                 case .dashboard:
@@ -40,7 +36,7 @@ struct ContentView: View {
                     SettingsView()
                 }
             }
-            .clipShape(RoundedRectangle(cornerRadius: 34, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -51,8 +47,8 @@ struct SidebarView: View {
     let screenCapture: ScreenCapture
 
     var body: some View {
-        TigerPanel(padding: 18, cornerRadius: 30, emphasis: 0.9) {
-            VStack(alignment: .leading, spacing: 18) {
+        TigerPanel(padding: 18, cornerRadius: 28, emphasis: 0.9) {
+            VStack(alignment: .leading, spacing: 16) {
                 brandHeader
                 statusHero
                 navigation
@@ -69,7 +65,7 @@ struct SidebarView: View {
     }
 
     private var statusHero: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 14) {
             HStack {
                 TigerCapsuleBadge(
                     title: appState.isTracking ? "Tracking Live" : "Standby",
@@ -86,37 +82,36 @@ struct SidebarView: View {
 
             VStack(alignment: .leading, spacing: 10) {
                 Text("Today’s posture")
-                    .font(.system(size: 11, weight: .bold, design: .rounded))
-                    .tracking(1.3)
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .tracking(1.2)
                     .foregroundColor(TigerPalette.textMuted)
 
                 Text(statusHeadline)
-                    .font(.system(size: 19, weight: .semibold, design: .rounded))
+                    .font(.system(size: 18, weight: .semibold, design: .rounded))
                     .foregroundColor(TigerPalette.textPrimary)
 
                 Text(statusDetail)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.system(size: 13, weight: .regular))
                     .foregroundColor(TigerPalette.textSecondary)
-                    .lineSpacing(3)
+                    .lineSpacing(2)
             }
         }
         .padding(18)
         .background(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .fill(
                     LinearGradient(
                         colors: [
-                            TigerPalette.amber.opacity(0.24),
-                            TigerPalette.gold.opacity(0.14),
-                            Color.white.opacity(0.05)
+                            Color.white.opacity(0.08),
+                            TigerPalette.amber.opacity(0.06)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.1), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
                 )
         )
     }
@@ -124,8 +119,8 @@ struct SidebarView: View {
     private var navigation: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Navigate")
-                .font(.system(size: 11, weight: .bold, design: .rounded))
-                .tracking(1.4)
+                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                .tracking(1.2)
                 .foregroundColor(TigerPalette.textMuted)
                 .padding(.horizontal, 6)
 
@@ -261,18 +256,18 @@ struct SidebarItem: View {
                 Spacer()
 
                 if isSelected {
-                    Circle()
-                        .fill(TigerPalette.amber)
-                        .frame(width: 6, height: 6)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(TigerPalette.textMuted)
                 }
             }
             .padding(.horizontal, 10)
-            .padding(.vertical, 10)
+            .padding(.vertical, 9)
             .background(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(backgroundFill)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
                             .strokeBorder(borderColor, lineWidth: 1)
                     )
             )
@@ -282,17 +277,17 @@ struct SidebarItem: View {
     }
 
     private var backgroundFill: Color {
-        if isSelected { return Color.white.opacity(0.08) }
-        if isHovered { return Color.white.opacity(0.04) }
+        if isSelected { return Color.white.opacity(0.07) }
+        if isHovered { return Color.white.opacity(0.035) }
         return .clear
     }
 
     private var borderColor: Color {
-        isSelected ? Color.white.opacity(0.08) : .clear
+        isSelected ? Color.white.opacity(0.07) : .clear
     }
 
     private var iconBackground: Color {
-        isSelected ? TigerPalette.amber.opacity(0.16) : Color.white.opacity(0.05)
+        isSelected ? TigerPalette.amber.opacity(0.12) : Color.white.opacity(0.05)
     }
 
     private var iconColor: Color {
@@ -314,18 +309,8 @@ struct SidebarCommandButton: View {
                 Text(title)
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
             }
-            .foregroundColor(tint)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(tint.opacity(0.12))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .strokeBorder(tint.opacity(0.18), lineWidth: 1)
-                    )
-            )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(TigerButtonStyle(tint: tint, prominence: .secondary))
     }
 }

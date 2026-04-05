@@ -5,61 +5,82 @@ struct NudgePopoverView: View {
     let onResponse: (String) -> Void
 
     var body: some View {
-        VStack(spacing: 0) {
-            Rectangle()
-                .fill(nudge.severity.color)
-                .frame(height: 4)
+        ZStack {
+            TigerAppBackground()
 
-            VStack(spacing: 16) {
-                TigerMark(size: 60)
-                    .padding(.top, 10)
-
-                Text(nudge.message)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.primary)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(4)
-                    .padding(.horizontal, 16)
-
-                if !nudge.trigger.isEmpty {
-                    Text(nudge.trigger)
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 6)
-                        .background(
-                            RoundedRectangle(cornerRadius: 6)
-                                .fill(Color.primary.opacity(0.05))
+            TigerPanel(padding: 0, cornerRadius: 24, emphasis: 1.0) {
+                VStack(spacing: 0) {
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [nudge.severity.color.opacity(0.26), .clear],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
                         )
-                }
+                        .frame(height: 48)
+                        .overlay(alignment: .topLeading) {
+                            TigerCapsuleBadge(title: severityTitle, symbol: "bell.badge.fill", tint: nudge.severity.color)
+                                .padding(14)
+                        }
 
-                HStack(spacing: 12) {
-                    Button {
-                        onResponse("acknowledged")
-                    } label: {
-                        Text("OK fine...")
-                            .font(.system(size: 13, weight: .medium))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 8)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(nudge.severity.color)
+                    VStack(spacing: 16) {
+                        TigerMark(size: 56)
 
-                    Button {
-                        onResponse("snoozed")
-                    } label: {
-                        Text("5 more minutes")
-                            .font(.system(size: 13, weight: .medium))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 8)
+                        Text(nudge.message)
+                            .font(.system(size: 14, weight: .regular))
+                            .foregroundColor(TigerPalette.textPrimary)
+                            .multilineTextAlignment(.center)
+                            .lineLimit(4)
+                            .padding(.horizontal, 18)
+
+                        if !nudge.trigger.isEmpty {
+                            Text(nudge.trigger)
+                                .font(.system(size: 12, weight: .regular))
+                                .foregroundColor(TigerPalette.textSecondary)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .fill(Color.white.opacity(0.035))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                                .strokeBorder(Color.white.opacity(0.05), lineWidth: 1)
+                                        )
+                                )
+                        }
+
+                        HStack(spacing: 10) {
+                            Button {
+                                onResponse("acknowledged")
+                            } label: {
+                                Text("OK fine...")
+                                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(TigerButtonStyle(tint: nudge.severity.color, prominence: .secondary))
+
+                            Button {
+                                onResponse("snoozed")
+                            } label: {
+                                Text("5 more minutes")
+                                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(TigerButtonStyle(tint: TigerPalette.textPrimary, prominence: .quiet))
+                        }
                     }
-                    .buttonStyle(.bordered)
+                    .padding(.horizontal, 18)
+                    .padding(.top, 4)
+                    .padding(.bottom, 18)
                 }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 16)
             }
         }
-        .frame(width: 320)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .frame(width: 336)
+        .preferredColorScheme(.dark)
+    }
+
+    private var severityTitle: String {
+        nudge.severity.rawValue.capitalized
     }
 }

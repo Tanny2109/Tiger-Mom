@@ -64,7 +64,7 @@ struct DashboardView: View {
 
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
-            VStack(spacing: 22) {
+            VStack(spacing: 18) {
                 heroSection
                 if !appState.hasScreenRecordingPermission {
                     PermissionBanner {
@@ -83,7 +83,7 @@ struct DashboardView: View {
                     weeklyTrends
                 }
             }
-            .padding(24)
+            .padding(22)
         }
         .task {
             await loadData()
@@ -91,11 +91,11 @@ struct DashboardView: View {
     }
 
     private var heroSection: some View {
-        TigerPanel(padding: 24, cornerRadius: 30, emphasis: 1.2) {
-            HStack(alignment: .center, spacing: 26) {
-                VStack(alignment: .leading, spacing: 16) {
+        TigerPanel(padding: 24, cornerRadius: 26, emphasis: 1.05) {
+            HStack(alignment: .center, spacing: 22) {
+                VStack(alignment: .leading, spacing: 14) {
                     TigerSectionHeader(
-                        eyebrow: "Mission Control",
+                        eyebrow: "Today",
                         title: greeting,
                         detail: "\(Date().formatted(.dateTime.weekday(.wide).month(.wide).day())) • \(dashboardSummary)"
                     )
@@ -115,26 +115,32 @@ struct DashboardView: View {
                     }
 
                     HStack(spacing: 12) {
-                        dashboardButton(
-                            title: appState.isTracking ? "Pause Tracking" : "Start Tracking",
-                            symbol: appState.isTracking ? "pause.fill" : "record.circle.fill",
-                            tint: appState.isTracking ? TigerPalette.coral : TigerPalette.jade
-                        ) {
+                        Button {
                             appState.isTracking.toggle()
                             if appState.isTracking {
                                 screenCapture.start(appState: appState)
                             } else {
                                 screenCapture.stop()
                             }
+                        } label: {
+                            Label(appState.isTracking ? "Pause Tracking" : "Start Tracking",
+                                  systemImage: appState.isTracking ? "pause.fill" : "record.circle.fill")
+                                .font(.system(size: 13, weight: .semibold, design: .rounded))
                         }
+                        .buttonStyle(
+                            TigerButtonStyle(
+                                tint: appState.isTracking ? TigerPalette.coral : TigerPalette.jade,
+                                prominence: .secondary
+                            )
+                        )
 
-                        dashboardButton(
-                            title: "Refresh",
-                            symbol: "arrow.clockwise",
-                            tint: TigerPalette.gold
-                        ) {
+                        Button {
                             Task { await loadData() }
+                        } label: {
+                            Label("Refresh", systemImage: "arrow.clockwise")
+                                .font(.system(size: 13, weight: .semibold, design: .rounded))
                         }
+                        .buttonStyle(TigerButtonStyle(tint: TigerPalette.gold, prominence: .quiet))
                     }
                 }
 
@@ -151,37 +157,37 @@ struct DashboardView: View {
                 .fill(
                     RadialGradient(
                         colors: [
-                            TigerPalette.gold.opacity(0.32),
-                            TigerPalette.coral.opacity(0.12),
+                            Color.white.opacity(0.06),
+                            TigerPalette.amber.opacity(0.08),
                             Color.clear
                         ],
                         center: .center,
                         startRadius: 10,
-                        endRadius: 110
+                        endRadius: 92
                     )
                 )
-                .frame(width: 220, height: 220)
+                .frame(width: 188, height: 188)
 
             Circle()
-                .stroke(Color.white.opacity(0.06), lineWidth: 16)
-                .frame(width: 188, height: 188)
+                .stroke(Color.white.opacity(0.07), lineWidth: 12)
+                .frame(width: 164, height: 164)
 
             Circle()
                 .trim(from: 0, to: focusRingProgress)
                 .stroke(
                     AngularGradient(
-                        colors: [TigerPalette.mist, TigerPalette.gold, TigerPalette.coral],
+                        colors: [TigerPalette.jade, TigerPalette.gold, TigerPalette.coral],
                         center: .center
                     ),
-                    style: StrokeStyle(lineWidth: 16, lineCap: .round)
+                    style: StrokeStyle(lineWidth: 12, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
-                .frame(width: 188, height: 188)
-                .shadow(color: TigerPalette.gold.opacity(0.3), radius: 16, x: 0, y: 10)
+                .frame(width: 164, height: 164)
+                .shadow(color: TigerPalette.gold.opacity(0.16), radius: 10, x: 0, y: 6)
 
             VStack(spacing: 6) {
                 Text("\(daily.focusScore)")
-                    .font(.system(size: 58, weight: .bold, design: .rounded))
+                    .font(.system(size: 50, weight: .semibold, design: .rounded))
                     .foregroundColor(TigerPalette.textPrimary)
 
                 Text("Focus score")
@@ -189,11 +195,11 @@ struct DashboardView: View {
                     .foregroundColor(TigerPalette.textSecondary)
             }
         }
-        .frame(width: 230, height: 230)
+        .frame(width: 198, height: 198)
     }
 
     private var metricsRow: some View {
-        HStack(spacing: 18) {
+        HStack(spacing: 14) {
             TigerMetricTile(
                 label: "Deep Work",
                 value: daily.deepWorkMinutes.tigerClock,
@@ -222,7 +228,7 @@ struct DashboardView: View {
     }
 
     private var timelineSection: some View {
-        TigerPanel(padding: 22, cornerRadius: 28) {
+        TigerPanel(padding: 20, cornerRadius: 24) {
             VStack(alignment: .leading, spacing: 18) {
                 TigerSectionHeader(
                     eyebrow: "Rhythm",
@@ -253,7 +259,7 @@ struct DashboardView: View {
     }
 
     private var breakdownSection: some View {
-        TigerPanel(padding: 22, cornerRadius: 28) {
+        TigerPanel(padding: 20, cornerRadius: 24) {
             VStack(alignment: .leading, spacing: 18) {
                 TigerSectionHeader(
                     eyebrow: "Composition",
@@ -314,11 +320,11 @@ struct DashboardView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(width: 420)
+        .frame(width: 400)
     }
 
     private var reportCard: some View {
-        TigerPanel(padding: 22, cornerRadius: 28, emphasis: 1.15) {
+        TigerPanel(padding: 20, cornerRadius: 24, emphasis: 1.0) {
             VStack(alignment: .leading, spacing: 18) {
                 TigerSectionHeader(
                     eyebrow: "Verdict",
@@ -348,7 +354,7 @@ struct DashboardView: View {
     }
 
     private var weeklyTrends: some View {
-        TigerPanel(padding: 22, cornerRadius: 28) {
+        TigerPanel(padding: 20, cornerRadius: 24) {
             VStack(alignment: .leading, spacing: 18) {
                 TigerSectionHeader(
                     eyebrow: "Momentum",
@@ -402,39 +408,16 @@ struct DashboardView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(width: 420)
-    }
-
-    private func dashboardButton(title: String, symbol: String, tint: Color, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 8) {
-                Image(systemName: symbol)
-                    .font(.system(size: 12, weight: .bold))
-                Text(title)
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
-            }
-            .foregroundColor(tint)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(tint.opacity(0.12))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .strokeBorder(tint.opacity(0.2), lineWidth: 1)
-                    )
-            )
-        }
-        .buttonStyle(.plain)
+        .frame(width: 400)
     }
 
     private func emptyState(message: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             TigerInlineGlyph(size: 28)
             Text(message)
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: 13, weight: .regular))
                 .foregroundColor(TigerPalette.textSecondary)
-                .lineSpacing(3)
+                .lineSpacing(2)
         }
         .frame(maxWidth: .infinity, minHeight: 160, alignment: .leading)
     }
@@ -442,17 +425,17 @@ struct DashboardView: View {
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
         switch hour {
-        case 5..<12: return "Good morning, Tanmay"
-        case 12..<17: return "Good afternoon, Tanmay"
-        case 17..<23: return "Good evening, Tanmay"
-        default: return "Still awake, Tanmay"
+        case 5..<12: return "Good morning"
+        case 12..<17: return "Good afternoon"
+        case 17..<23: return "Good evening"
+        default: return "Still awake"
         }
     }
 
     private var dashboardSummary: String {
-        if isLoading { return "Refreshing your local intelligence layer." }
-        if appState.isTracking { return "Tracking is active and the sidecar is shaping the day." }
-        return "Tracking is paused. Your dashboard is ready when you are."
+        if isLoading { return "Refreshing your local summary." }
+        if appState.isTracking { return "Tracking is active and the day is unfolding in real time." }
+        return "Tracking is paused. Resume when you want a live picture of the day."
     }
 
     private func gradeColor(_ grade: String) -> Color {
@@ -569,11 +552,11 @@ struct PermissionBanner: View {
     let onGrantAccess: () -> Void
 
     var body: some View {
-        TigerPanel(padding: 18, cornerRadius: 24) {
+        TigerPanel(padding: 18, cornerRadius: 22) {
             HStack(spacing: 16) {
                 ZStack {
                     Circle()
-                        .fill(TigerPalette.gold.opacity(0.14))
+                        .fill(TigerPalette.gold.opacity(0.1))
                         .frame(width: 42, height: 42)
                     Image(systemName: "hand.raised.fill")
                         .font(.system(size: 16, weight: .bold))
@@ -594,9 +577,7 @@ struct PermissionBanner: View {
                 Button("Grant Access") {
                     onGrantAccess()
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(TigerPalette.gold)
-                .controlSize(.large)
+                .buttonStyle(TigerButtonStyle(tint: TigerPalette.gold, prominence: .primary))
             }
         }
     }
