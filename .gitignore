@@ -3,3 +3,9 @@
 xcuserdata/
 DerivedData/
 *.pdf
+.venv/
+__pycache__/
+.pytest_cache/
+tiger_eye.db
+screenshots/
+*.pyc
