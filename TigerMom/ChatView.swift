@@ -286,7 +286,13 @@ struct ChatView: View {
                                 .fill(canSend ? TigerPalette.gold : TigerPalette.surfaceHover)
                         )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(
+                    TigerButtonStyle(
+                        tint: canSend ? TigerPalette.gold : TigerPalette.textSecondary,
+                        prominence: canSend ? .primary : .quiet,
+                        cornerRadius: 21
+                    )
+                )
                 .disabled(!canSend)
                 .keyboardShortcut(.return, modifiers: [.command])
                 .animation(.tigerQuick, value: canSend)

@@ -143,6 +143,10 @@ struct DashboardView: View {
                             } else {
                                 screenCapture.stop()
                             }
+                        } label: {
+                            Label(appState.isTracking ? "Pause Tracking" : "Start Tracking",
+                                  systemImage: appState.isTracking ? "pause.fill" : "record.circle.fill")
+                                .font(.system(size: 13, weight: .semibold, design: .rounded))
                         }
                     }
                     
@@ -471,7 +475,7 @@ struct DashboardView: View {
             Text(message)
                 .font(TigerTypography.bodySmall)
                 .foregroundColor(TigerPalette.textSecondary)
-                .lineSpacing(3)
+                .lineSpacing(2)
         }
         .frame(maxWidth: .infinity, minHeight: 120, alignment: .leading)
     }

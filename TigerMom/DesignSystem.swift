@@ -259,9 +259,9 @@ struct TigerMark: View {
                 .fill(
                     LinearGradient(
                         colors: [
-                            TigerPalette.amber.opacity(0.95),
-                            TigerPalette.gold,
-                            TigerPalette.coral
+                            TigerPalette.amber.opacity(0.88),
+                            TigerPalette.gold.opacity(0.96),
+                            TigerPalette.coral.opacity(0.9)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -277,10 +277,10 @@ struct TigerMark: View {
                 .fill(
                     RadialGradient(
                         colors: [
-                            Color.white.opacity(0.55),
-                            TigerPalette.amber.opacity(0.95),
-                            TigerPalette.gold.opacity(0.95),
-                            TigerPalette.coral.opacity(0.88)
+                            Color.white.opacity(0.45),
+                            TigerPalette.amber.opacity(0.9),
+                            TigerPalette.gold.opacity(0.85),
+                            TigerPalette.coral.opacity(0.75)
                         ],
                         center: .topLeading,
                         startRadius: 1,
@@ -361,6 +361,7 @@ struct TigerSectionHeader: View {
                 Text(detail)
                     .font(TigerTypography.bodySmall)
                     .foregroundColor(TigerPalette.textSecondary)
+                    .lineSpacing(2)
             }
         }
     }
@@ -435,7 +436,7 @@ struct TigerCapsuleBadge: View {
         .padding(.vertical, TigerSpacing.xs + 2)
         .background(
             Capsule(style: .continuous)
-                .fill(tint.opacity(0.12))
+                .fill(tint.opacity(0.1))
                 .overlay(
                     Capsule(style: .continuous)
                         .strokeBorder(tint.opacity(0.15), lineWidth: 1)

@@ -162,7 +162,7 @@ struct SettingsView: View {
                                 )
                         )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(TigerButtonStyle(tint: TigerPalette.jade, prominence: .quiet))
                 }
 
                 Button {

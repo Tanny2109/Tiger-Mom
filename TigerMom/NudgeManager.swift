@@ -68,7 +68,7 @@ class NudgeManager {
 
         let popover = NSPopover()
         popover.behavior = .applicationDefined
-        popover.contentSize = NSSize(width: 320, height: 280)
+        popover.contentSize = NSSize(width: 336, height: 360)
         popover.animates = true
 
         let view = NudgePopoverView(nudge: nudge) { [weak self] response in
