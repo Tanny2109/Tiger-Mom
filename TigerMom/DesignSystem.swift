@@ -1,95 +1,196 @@
 import SwiftUI
 
+// MARK: - Color Palette
+
 enum TigerPalette {
-    static let background = Color(hex: 0x111316)
-    static let backgroundSecondary = Color(hex: 0x191D22)
-    static let panel = Color.white.opacity(0.05)
-    static let panelStrong = Color.white.opacity(0.08)
-    static let line = Color.white.opacity(0.10)
-    static let textPrimary = Color.white.opacity(0.96)
-    static let textSecondary = Color.white.opacity(0.68)
-    static let textMuted = Color.white.opacity(0.45)
-    static let gold = Color(hex: 0xD2AF80)
-    static let amber = Color(hex: 0xEFE2CF)
-    static let coral = Color(hex: 0xC88969)
-    static let jade = Color(hex: 0xC6D0DC)
-    static let mist = Color(hex: 0xE8EDF4)
-    static let obsidian = Color(hex: 0x171A1F)
+    // Backgrounds - deeper, richer blacks
+    static let background = Color(hex: 0x0A0A0B)
+    static let backgroundSecondary = Color(hex: 0x111113)
+    static let backgroundTertiary = Color(hex: 0x18181B)
+    
+    // Surfaces - more visible elevation
+    static let surface = Color(hex: 0x1C1C1F)
+    static let surfaceElevated = Color(hex: 0x232326)
+    static let surfaceHover = Color.white.opacity(0.04)
+    
+    // Legacy panel colors (for compatibility)
+    static let panel = Color.white.opacity(0.06)
+    static let panelStrong = Color.white.opacity(0.10)
+    
+    // Borders - cleaner separation
+    static let border = Color.white.opacity(0.08)
+    static let borderStrong = Color.white.opacity(0.12)
+    static let line = Color.white.opacity(0.08)
+    
+    // Text - improved contrast hierarchy
+    static let textPrimary = Color.white.opacity(0.95)
+    static let textSecondary = Color.white.opacity(0.65)
+    static let textMuted = Color.white.opacity(0.40)
+    static let textDisabled = Color.white.opacity(0.25)
+    
+    // Accents - refined, cohesive
+    static let gold = Color(hex: 0xF5C563)      // Primary brand
+    static let amber = Color(hex: 0xFFE4C4)     // Warm highlight
+    static let coral = Color(hex: 0xE87B6B)     // Warning/distraction
+    static let jade = Color(hex: 0x3ECF8E)      // Success/deep work
+    static let mist = Color(hex: 0x7DD3FC)      // Info/communication
+    static let violet = Color(hex: 0xA78BFA)    // Secondary accent
+    static let obsidian = Color(hex: 0x0D1015)
 }
+
+// MARK: - Typography Scale
+
+enum TigerTypography {
+    static let displayLarge = Font.system(size: 32, weight: .bold, design: .rounded)
+    static let displayMedium = Font.system(size: 28, weight: .semibold, design: .rounded)
+    static let headline = Font.system(size: 22, weight: .semibold, design: .rounded)
+    static let title = Font.system(size: 18, weight: .semibold, design: .rounded)
+    static let body = Font.system(size: 15, weight: .medium)
+    static let bodySmall = Font.system(size: 13, weight: .medium)
+    static let caption = Font.system(size: 11, weight: .semibold)
+    static let overline = Font.system(size: 10, weight: .bold)
+}
+
+// MARK: - Spacing Scale
+
+enum TigerSpacing {
+    static let xs: CGFloat = 4
+    static let sm: CGFloat = 8
+    static let md: CGFloat = 12
+    static let lg: CGFloat = 16
+    static let xl: CGFloat = 20
+    static let xxl: CGFloat = 24
+    static let xxxl: CGFloat = 32
+}
+
+// MARK: - Animation Presets
+
+extension Animation {
+    static let tigerSpring = Animation.spring(response: 0.3, dampingFraction: 0.75)
+    static let tigerQuick = Animation.easeOut(duration: 0.15)
+    static let tigerSmooth = Animation.easeInOut(duration: 0.25)
+}
+
+// MARK: - App Background
 
 struct TigerAppBackground: View {
     var body: some View {
         ZStack {
-            LinearGradient(
-                colors: [
-                    TigerPalette.background,
-                    Color(hex: 0x15181D),
-                    TigerPalette.backgroundSecondary
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-
+            TigerPalette.background
+            
+            // Subtle warm gradient in top-left
             RadialGradient(
-                colors: [TigerPalette.amber.opacity(0.08), .clear],
+                colors: [TigerPalette.gold.opacity(0.15), .clear],
                 center: .topLeading,
-                startRadius: 10,
-                endRadius: 420
+                startRadius: 40,
+                endRadius: 400
             )
             .offset(x: -80, y: -100)
-
+            
+            // Subtle cool accent top-right
             RadialGradient(
-                colors: [Color.white.opacity(0.05), .clear],
+                colors: [TigerPalette.mist.opacity(0.08), .clear],
                 center: .topTrailing,
-                startRadius: 10,
-                endRadius: 340
+                startRadius: 20,
+                endRadius: 300
             )
-            .offset(x: 120, y: -20)
-
+            .offset(x: 150, y: -50)
+            
+            // Very subtle noise texture
             Rectangle()
-                .fill(Color.black.opacity(0.08))
-                .blendMode(.multiply)
+                .fill(
+                    LinearGradient(
+                        colors: [.clear, Color.white.opacity(0.015), .clear],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
         }
         .ignoresSafeArea()
     }
 }
 
+// MARK: - Panel Component
+
 struct TigerPanel<Content: View>: View {
-    var padding: CGFloat = 20
-    var cornerRadius: CGFloat = 24
+    var padding: CGFloat = TigerSpacing.xl
+    var cornerRadius: CGFloat = 16
     var emphasis: Double = 1.0
     @ViewBuilder var content: () -> Content
-
+    
     var body: some View {
         content()
             .padding(padding)
             .background(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(.regularMaterial)
+                    .fill(TigerPalette.surface.opacity(0.8 + (0.2 * emphasis)))
                     .overlay(
                         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                            .fill(TigerPalette.panel.opacity(0.96 + (0.03 * emphasis)))
+                            .strokeBorder(TigerPalette.border, lineWidth: 1)
                     )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                            .strokeBorder(Color.white.opacity(0.08 + (0.02 * emphasis)), lineWidth: 1)
-                    )
-                    .overlay(alignment: .top) {
-                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [Color.white.opacity(0.18), .clear],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                ),
-                                lineWidth: 1
-                            )
-                            .blur(radius: 0.2)
-                    }
-                    .shadow(color: Color.black.opacity(0.18), radius: 18, x: 0, y: 12)
             )
     }
 }
+
+// MARK: - Navigation Item
+
+struct TigerNavItem: View {
+    let icon: String
+    let label: String
+    let isSelected: Bool
+    let action: () -> Void
+    
+    @State private var isHovered = false
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: TigerSpacing.md) {
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(isSelected ? TigerPalette.gold : TigerPalette.textSecondary)
+                    .frame(width: 20)
+                
+                Text(label)
+                    .font(TigerTypography.bodySmall)
+                    .foregroundColor(isSelected ? TigerPalette.textPrimary : TigerPalette.textSecondary)
+                
+                Spacer()
+            }
+            .padding(.horizontal, TigerSpacing.md)
+            .padding(.vertical, TigerSpacing.sm + 2)
+            .background(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(isSelected ? TigerPalette.gold.opacity(0.12) : (isHovered ? TigerPalette.surfaceHover : .clear))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .strokeBorder(isSelected ? TigerPalette.gold.opacity(0.2) : .clear, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+        .animation(.tigerQuick, value: isHovered)
+        .animation(.tigerQuick, value: isSelected)
+    }
+}
+
+// MARK: - Section Label (for sidebar)
+
+struct TigerSectionLabel: View {
+    let title: String
+    
+    var body: some View {
+        Text(title.uppercased())
+            .font(TigerTypography.overline)
+            .tracking(1.2)
+            .foregroundColor(TigerPalette.textMuted)
+            .padding(.horizontal, TigerSpacing.md)
+            .padding(.top, TigerSpacing.lg)
+            .padding(.bottom, TigerSpacing.xs)
+    }
+}
+
+// MARK: - Eye Shape
 
 struct TigerEyeShape: Shape {
     func path(in rect: CGRect) -> Path {
@@ -114,6 +215,8 @@ struct TigerEyeShape: Shape {
     }
 }
 
+// MARK: - Tiger Mark (Logo)
+
 struct TigerMark: View {
     var size: CGFloat = 44
     var framed: Bool = true
@@ -122,40 +225,20 @@ struct TigerMark: View {
     var body: some View {
         ZStack {
             if framed {
-                RoundedRectangle(cornerRadius: size * 0.32, style: .continuous)
+                RoundedRectangle(cornerRadius: size * 0.28, style: .continuous)
                     .fill(
                         LinearGradient(
                             colors: [
                                 TigerPalette.obsidian,
-                                Color(hex: 0x1F242B)
+                                Color(hex: 0x151519)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
                     .overlay(
-                        RoundedRectangle(cornerRadius: size * 0.32, style: .continuous)
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.16),
-                                        TigerPalette.amber.opacity(0.14),
-                                        Color.white.opacity(0.04)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: max(1, size * 0.026)
-                            )
-                    )
-
-                RoundedRectangle(cornerRadius: size * 0.32, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [Color.white.opacity(0.05), .clear, .clear],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+                        RoundedRectangle(cornerRadius: size * 0.28, style: .continuous)
+                            .strokeBorder(TigerPalette.borderStrong, lineWidth: 1)
                     )
             }
 
@@ -163,14 +246,13 @@ struct TigerMark: View {
                 Circle()
                     .fill(
                         RadialGradient(
-                            colors: [TigerPalette.gold.opacity(0.18), .clear],
+                            colors: [TigerPalette.gold.opacity(0.25), .clear],
                             center: .center,
                             startRadius: 2,
-                            endRadius: size * 0.48
+                            endRadius: size * 0.45
                         )
                     )
                     .frame(width: size * 0.8, height: size * 0.8)
-                    .blur(radius: size * 0.02)
             }
 
             TigerEyeShape()
@@ -215,32 +297,38 @@ struct TigerMark: View {
                 .fill(Color.white.opacity(0.6))
                 .frame(width: size * 0.045, height: size * 0.045)
                 .offset(x: -size * 0.06, y: -size * 0.03)
-                .blur(radius: size * 0.004)
         }
         .frame(width: size, height: size)
-        .shadow(color: TigerPalette.gold.opacity(luminous ? 0.16 : 0.08), radius: size * 0.14, x: 0, y: size * 0.05)
+        .shadow(color: TigerPalette.gold.opacity(luminous ? 0.2 : 0.1), radius: size * 0.15, x: 0, y: size * 0.06)
     }
 }
 
+// MARK: - Tiger Mark Strip
+
 struct TigerMarkStrip: View {
-    var size: CGFloat = 40
+    var size: CGFloat = 36
+    var showSubtitle: Bool = true
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: TigerSpacing.md) {
             TigerMark(size: size)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("Tiger Mom")
-                    .font(.system(size: 19, weight: .semibold, design: .rounded))
+                    .font(TigerTypography.title)
                     .foregroundColor(TigerPalette.textPrimary)
 
-                Text("Watchful coaching for your Mac")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(TigerPalette.textSecondary)
+                if showSubtitle {
+                    Text("Watchful coaching")
+                        .font(TigerTypography.caption)
+                        .foregroundColor(TigerPalette.textMuted)
+                }
             }
         }
     }
 }
+
+// MARK: - Inline Glyph
 
 struct TigerInlineGlyph: View {
     var size: CGFloat = 34
@@ -251,25 +339,27 @@ struct TigerInlineGlyph: View {
     }
 }
 
+// MARK: - Section Header
+
 struct TigerSectionHeader: View {
     let eyebrow: String
     let title: String
     var detail: String? = nil
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: TigerSpacing.sm) {
             Text(eyebrow.uppercased())
-                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                .font(TigerTypography.overline)
                 .tracking(1.4)
                 .foregroundColor(TigerPalette.textMuted)
 
             Text(title)
-                .font(.system(size: 22, weight: .semibold, design: .rounded))
+                .font(TigerTypography.headline)
                 .foregroundColor(TigerPalette.textPrimary)
 
             if let detail {
                 Text(detail)
-                    .font(.system(size: 13, weight: .regular))
+                    .font(TigerTypography.bodySmall)
                     .foregroundColor(TigerPalette.textSecondary)
                     .lineSpacing(2)
             }
@@ -277,45 +367,54 @@ struct TigerSectionHeader: View {
     }
 }
 
+// MARK: - Metric Tile
+
 struct TigerMetricTile: View {
     let label: String
     let value: String
     let symbol: String
     let tint: Color
+    
+    @State private var isHovered = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: TigerSpacing.md) {
             Image(systemName: symbol)
-                .font(.system(size: 14, weight: .semibold))
+                .font(.system(size: 13, weight: .semibold))
                 .foregroundColor(tint)
-                .frame(width: 32, height: 32)
+                .frame(width: 30, height: 30)
                 .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(tint.opacity(0.1))
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(tint.opacity(0.12))
                 )
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: TigerSpacing.xs) {
                 Text(value)
-                    .font(.system(size: 22, weight: .semibold, design: .rounded))
+                    .font(TigerTypography.headline)
                     .foregroundColor(TigerPalette.textPrimary)
 
                 Text(label)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(TigerTypography.caption)
                     .foregroundColor(TigerPalette.textSecondary)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(18)
+        .padding(TigerSpacing.lg)
         .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color.white.opacity(0.035))
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(TigerPalette.surface)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.05), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(isHovered ? TigerPalette.borderStrong : TigerPalette.border, lineWidth: 1)
                 )
         )
+        .scaleEffect(isHovered ? 1.02 : 1.0)
+        .animation(.tigerSpring, value: isHovered)
+        .onHover { isHovered = $0 }
     }
 }
+
+// MARK: - Capsule Badge
 
 struct TigerCapsuleBadge: View {
     let title: String
@@ -323,40 +422,42 @@ struct TigerCapsuleBadge: View {
     var tint: Color = TigerPalette.gold
 
     var body: some View {
-        HStack(spacing: 7) {
+        HStack(spacing: TigerSpacing.xs + 2) {
             if let symbol {
                 Image(systemName: symbol)
-                    .font(.system(size: 11, weight: .bold))
+                    .font(.system(size: 10, weight: .bold))
             }
 
             Text(title)
-                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                .font(TigerTypography.caption)
         }
         .foregroundColor(tint)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
+        .padding(.horizontal, TigerSpacing.sm + 2)
+        .padding(.vertical, TigerSpacing.xs + 2)
         .background(
             Capsule(style: .continuous)
                 .fill(tint.opacity(0.1))
                 .overlay(
                     Capsule(style: .continuous)
-                        .strokeBorder(tint.opacity(0.14), lineWidth: 1)
+                        .strokeBorder(tint.opacity(0.15), lineWidth: 1)
                 )
         )
     }
 }
 
+// MARK: - Inset Field Style
+
 struct TigerInsetFieldStyle: ViewModifier {
     func body(content: Content) -> some View {
         content
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
+            .padding(.horizontal, TigerSpacing.lg)
+            .padding(.vertical, TigerSpacing.md)
             .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color.white.opacity(0.04))
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(TigerPalette.backgroundTertiary)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .strokeBorder(TigerPalette.border, lineWidth: 1)
                     )
             )
     }
@@ -368,115 +469,149 @@ extension View {
     }
 }
 
+// MARK: - Hover Scale Modifier
+
+struct TigerHoverScale: ViewModifier {
+    var scale: CGFloat = 1.02
+    @State private var isHovered = false
+    
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(isHovered ? scale : 1.0)
+            .animation(.tigerSpring, value: isHovered)
+            .onHover { isHovered = $0 }
+    }
+}
+
+extension View {
+    func tigerHoverScale(_ scale: CGFloat = 1.02) -> some View {
+        modifier(TigerHoverScale(scale: scale))
+    }
+}
+
+// MARK: - Divider
+
 struct TigerDivider: View {
+    var vertical: Bool = false
+    
     var body: some View {
-        Rectangle()
-            .fill(
+        if vertical {
+            Rectangle()
+                .fill(TigerPalette.border)
+                .frame(width: 1)
+        } else {
+            Rectangle()
+                .fill(TigerPalette.border)
+                .frame(height: 1)
+        }
+    }
+}
+
+// MARK: - Skeleton Loading
+
+struct TigerSkeleton: View {
+    var cornerRadius: CGFloat = 8
+    @State private var shimmer = false
+    
+    var body: some View {
+        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            .fill(TigerPalette.surfaceHover)
+            .overlay(
                 LinearGradient(
-                    colors: [.clear, TigerPalette.line.opacity(0.9), .clear],
+                    colors: [
+                        .clear,
+                        Color.white.opacity(0.05),
+                        .clear
+                    ],
                     startPoint: .leading,
                     endPoint: .trailing
                 )
+                .offset(x: shimmer ? 200 : -200)
             )
-            .frame(height: 1)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .onAppear {
+                withAnimation(.linear(duration: 1.5).repeatForever(autoreverses: false)) {
+                    shimmer = true
+                }
+            }
     }
 }
 
-enum TigerButtonProminence {
-    case primary
-    case secondary
-    case quiet
-}
+// MARK: - Primary Button
 
-struct TigerButtonStyle: ButtonStyle {
-    var tint: Color = TigerPalette.gold
-    var prominence: TigerButtonProminence = .secondary
-    var cornerRadius: CGFloat = 15
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .foregroundStyle(foregroundColor)
-            .padding(.horizontal, prominence == .quiet ? 12 : 14)
-            .padding(.vertical, 10)
-            .background(background(configuration.isPressed))
-            .scaleEffect(configuration.isPressed ? 0.985 : 1)
-            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
-    }
-
-    private var foregroundColor: Color {
-        prominence == .primary ? TigerPalette.background : tint
-    }
-
-    @ViewBuilder
-    private func background(_ isPressed: Bool) -> some View {
-        let opacityShift = isPressed ? 0.08 : 0
-
-        switch prominence {
-        case .primary:
-            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .fill(tint.opacity(0.9 - opacityShift))
-                .overlay(
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
-                )
-        case .secondary:
-            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .fill(tint.opacity(0.1 + opacityShift))
-                .overlay(
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .strokeBorder(tint.opacity(0.14), lineWidth: 1)
-                )
-        case .quiet:
-            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .fill(Color.white.opacity(0.035 + opacityShift))
-                .overlay(
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.05), lineWidth: 1)
-                )
-        }
-    }
-}
-
-struct TigerPillButtonStyle: ButtonStyle {
-    var tint: Color = TigerPalette.textPrimary
-    var isSelected: Bool = false
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .foregroundStyle(isSelected ? tint : TigerPalette.textSecondary)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+struct TigerPrimaryButton: View {
+    let title: String
+    var icon: String? = nil
+    let action: () -> Void
+    
+    @State private var isHovered = false
+    @State private var isPressed = false
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: TigerSpacing.sm) {
+                if let icon {
+                    Image(systemName: icon)
+                        .font(.system(size: 13, weight: .semibold))
+                }
+                Text(title)
+                    .font(TigerTypography.bodySmall)
+                    .fontWeight(.semibold)
+            }
+            .foregroundColor(TigerPalette.background)
+            .padding(.horizontal, TigerSpacing.lg)
+            .padding(.vertical, TigerSpacing.md)
             .background(
-                Capsule(style: .continuous)
-                    .fill(isSelected ? tint.opacity(0.12) : Color.white.opacity(0.035 + (configuration.isPressed ? 0.03 : 0)))
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(TigerPalette.gold)
+            )
+            .scaleEffect(isPressed ? 0.97 : (isHovered ? 1.02 : 1.0))
+            .animation(.tigerSpring, value: isHovered)
+            .animation(.tigerQuick, value: isPressed)
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+    }
+}
+
+// MARK: - Secondary Button
+
+struct TigerSecondaryButton: View {
+    let title: String
+    var icon: String? = nil
+    let action: () -> Void
+    
+    @State private var isHovered = false
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: TigerSpacing.sm) {
+                if let icon {
+                    Image(systemName: icon)
+                        .font(.system(size: 13, weight: .medium))
+                }
+                Text(title)
+                    .font(TigerTypography.bodySmall)
+            }
+            .foregroundColor(TigerPalette.textSecondary)
+            .padding(.horizontal, TigerSpacing.lg)
+            .padding(.vertical, TigerSpacing.md)
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(isHovered ? TigerPalette.surfaceHover : .clear)
                     .overlay(
-                        Capsule(style: .continuous)
-                            .strokeBorder(isSelected ? tint.opacity(0.16) : Color.white.opacity(0.05), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .strokeBorder(TigerPalette.border, lineWidth: 1)
                     )
             )
-            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
-    }
-}
-
-struct TigerLabeledValueRow: View {
-    let label: String
-    let value: String
-    var tint: Color? = nil
-
-    var body: some View {
-        HStack {
-            Text(label)
-                .font(.system(size: 13, weight: .regular))
-                .foregroundColor(TigerPalette.textSecondary)
-
-            Spacer()
-
-            Text(value)
-                .font(.system(size: 13, weight: .semibold, design: .rounded))
-                .foregroundColor(tint ?? TigerPalette.textPrimary)
+            .animation(.tigerQuick, value: isHovered)
         }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
     }
 }
+
+// MARK: - Color Extension
 
 extension Color {
     init(hex: UInt, alpha: Double = 1.0) {
@@ -489,6 +624,8 @@ extension Color {
         )
     }
 }
+
+// MARK: - Int Extensions
 
 extension Int {
     var tigerDuration: String {

@@ -1,5 +1,7 @@
 import SwiftUI
 
+// MARK: - Data Models
+
 struct ChatMessage: Identifiable, Equatable {
     let id: String
     let content: String
@@ -49,6 +51,8 @@ enum ChatConnectionStatus {
     }
 }
 
+// MARK: - Chat View
+
 struct ChatView: View {
     @Bindable var appState: AppState
 
@@ -60,7 +64,6 @@ struct ChatView: View {
     @State private var connectionStatus: ChatConnectionStatus = .checking
     @State private var stats = ChatStatsSnapshot()
     @State private var lastUpdatedAt: Date?
-    @State private var statusMessage = "Tiger Mom is waiting."
 
     private let suggestedPrompts = [
         "How am I doing today?",
@@ -70,213 +73,218 @@ struct ChatView: View {
     ]
 
     var body: some View {
-        VStack(spacing: 18) {
-            header
-
-            HStack(alignment: .top, spacing: 20) {
-                conversationStage
-                contextRail
-                    .frame(width: 320)
-            }
+        HStack(alignment: .top, spacing: TigerSpacing.lg) {
+            // Main conversation area
+            conversationStage
+            
+            // Context sidebar
+            contextRail
+                .frame(width: 280)
         }
-        .padding(22)
+        .padding(TigerSpacing.xxl)
         .task {
             await refreshAll()
         }
     }
 
-    private var header: some View {
-        TigerPanel(padding: 24, cornerRadius: 26, emphasis: 1.0) {
-            HStack(alignment: .top, spacing: 18) {
-                VStack(alignment: .leading, spacing: 12) {
-                    TigerSectionHeader(
-                        eyebrow: "Conversation",
-                        title: "Talk to Tiger Mom",
-                        detail: statusMessage
-                    )
-
-                    HStack(spacing: 10) {
-                        ConnectionBadge(status: connectionStatus)
-
-                        if let lastUpdatedAt {
-                            TigerCapsuleBadge(
-                                title: "Updated \(lastUpdatedAt.formatted(date: .omitted, time: .shortened))",
-                                symbol: "clock.fill",
-                                tint: TigerPalette.textSecondary
-                            )
-                        }
-                    }
-                }
-
-                Spacer()
-
-                HStack(spacing: 10) {
-                    Button {
-                        Task { await refreshAll() }
-                    } label: {
-                        Label("Refresh", systemImage: "arrow.clockwise")
-                            .font(.system(size: 13, weight: .semibold, design: .rounded))
-                    }
-                    .buttonStyle(TigerButtonStyle(tint: TigerPalette.gold, prominence: .quiet))
-
-                    Button {
-                        startFreshChat()
-                    } label: {
-                        Label("New Thread", systemImage: "plus.bubble.fill")
-                            .font(.system(size: 13, weight: .semibold, design: .rounded))
-                    }
-                    .buttonStyle(TigerButtonStyle(tint: TigerPalette.jade, prominence: .secondary))
-                }
-            }
-        }
-    }
-
+    // MARK: - Conversation Stage
+    
     private var conversationStage: some View {
-        TigerPanel(padding: 0, cornerRadius: 28, emphasis: 1.0) {
-            VStack(spacing: 0) {
-                promptRail
-                    .padding(20)
+        VStack(spacing: 0) {
+            // Header
+            chatHeader
+            
+            Spacer().frame(height: TigerSpacing.lg)
+            
+            // Chat content
+            TigerPanel(padding: 0, cornerRadius: 16) {
+                VStack(spacing: 0) {
+                    // Quick prompts
+                    promptRail
+                        .padding(TigerSpacing.lg)
+                    
+                    TigerDivider()
+                    
+                    // Messages
+                    ScrollViewReader { proxy in
+                        ScrollView(.vertical, showsIndicators: false) {
+                            LazyVStack(spacing: TigerSpacing.lg) {
+                                if isLoading {
+                                    loadingState
+                                        .padding(.top, 60)
+                                } else if messages.isEmpty && !isSending {
+                                    emptyState
+                                        .padding(.top, 40)
+                                }
 
-                TigerDivider()
+                                ForEach(messages) { message in
+                                    MessageBubble(message: message)
+                                        .id(message.id)
+                                        .transition(.asymmetric(
+                                            insertion: .move(edge: message.isUser ? .trailing : .leading).combined(with: .opacity),
+                                            removal: .opacity
+                                        ))
+                                }
 
-                ScrollViewReader { proxy in
-                    ScrollView(.vertical, showsIndicators: false) {
-                        LazyVStack(spacing: 16) {
-                            if isLoading {
-                                loadingState
-                                    .padding(.top, 80)
-                            } else if messages.isEmpty && !isSending {
-                                emptyState
-                                    .padding(.top, 48)
+                                if isSending {
+                                    TypingIndicator()
+                                        .id("typing")
+                                }
                             }
-
-                            ForEach(messages) { message in
-                                MessageBubble(message: message)
-                                    .id(message.id)
-                            }
-
-                            if isSending {
-                                TypingIndicator()
-                                    .id("typing")
-                            }
+                            .padding(.horizontal, TigerSpacing.xl)
+                            .padding(.vertical, TigerSpacing.lg)
                         }
-                        .padding(.horizontal, 22)
-                        .padding(.vertical, 20)
+                        .onAppear { scrollProxy = proxy }
+                        .onChange(of: messages.count) { scrollToBottom() }
+                        .onChange(of: isSending) { scrollToBottom() }
                     }
-                    .onAppear { scrollProxy = proxy }
-                    .onChange(of: messages.count) { scrollToBottom() }
-                    .onChange(of: isSending) { scrollToBottom() }
+                    
+                    TigerDivider()
+                    
+                    // Composer
+                    composer
+                        .padding(TigerSpacing.lg)
                 }
-
-                TigerDivider()
-
-                composer
-                    .padding(20)
             }
         }
-        .frame(maxWidth: .infinity, minHeight: 700)
+        .frame(maxWidth: .infinity, minHeight: 600)
     }
 
+    // MARK: - Chat Header
+    
+    private var chatHeader: some View {
+        HStack(alignment: .center, spacing: TigerSpacing.lg) {
+            VStack(alignment: .leading, spacing: TigerSpacing.xs) {
+                Text("Chat")
+                    .font(TigerTypography.headline)
+                    .foregroundColor(TigerPalette.textPrimary)
+                
+                Text("Talk to Tiger Mom about your day")
+                    .font(TigerTypography.bodySmall)
+                    .foregroundColor(TigerPalette.textSecondary)
+            }
+            
+            Spacer()
+            
+            HStack(spacing: TigerSpacing.sm) {
+                ConnectionBadge(status: connectionStatus)
+                
+                TigerSecondaryButton(title: "Refresh", icon: "arrow.clockwise") {
+                    Task { await refreshAll() }
+                }
+                
+                TigerSecondaryButton(title: "New Thread", icon: "plus") {
+                    startFreshChat()
+                }
+            }
+        }
+    }
+
+    // MARK: - Prompt Rail
+    
     private var promptRail: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Quick prompts")
-                .font(.system(size: 11, weight: .semibold, design: .rounded))
-                .tracking(1.2)
+        VStack(alignment: .leading, spacing: TigerSpacing.sm) {
+            Text("QUICK PROMPTS")
+                .font(TigerTypography.overline)
+                .tracking(1)
                 .foregroundColor(TigerPalette.textMuted)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
+                HStack(spacing: TigerSpacing.sm) {
                     ForEach(suggestedPrompts, id: \.self) { prompt in
-                        Button {
+                        PromptPill(text: prompt) {
                             inputText = prompt
-                        } label: {
-                            Text(prompt)
-                                .font(.system(size: 12, weight: .semibold, design: .rounded))
                         }
-                        .buttonStyle(TigerPillButtonStyle())
                     }
                 }
             }
         }
     }
 
+    // MARK: - Empty State
+    
     private var emptyState: some View {
-        VStack(spacing: 22) {
+        VStack(spacing: TigerSpacing.xl) {
             ZStack {
                 Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color.white.opacity(0.08), TigerPalette.amber.opacity(0.06)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 104, height: 104)
+                    .fill(TigerPalette.gold.opacity(0.1))
+                    .frame(width: 80, height: 80)
 
-                TigerMark(size: 68, framed: false)
+                TigerMark(size: 50, framed: false)
             }
 
-            VStack(spacing: 10) {
-                Text("Ask for the truth.")
-                    .font(.system(size: 20, weight: .semibold, design: .rounded))
+            VStack(spacing: TigerSpacing.sm) {
+                Text("Ask for the truth")
+                    .font(TigerTypography.title)
                     .foregroundColor(TigerPalette.textPrimary)
 
-                Text("Tiger Mom can read your local activity history and respond with actual context, not generic advice.")
-                    .font(.system(size: 13, weight: .regular))
+                Text("Tiger Mom reads your activity history and responds with actual context, not generic advice.")
+                    .font(TigerTypography.bodySmall)
                     .foregroundColor(TigerPalette.textSecondary)
                     .multilineTextAlignment(.center)
-                    .frame(maxWidth: 420)
-                    .lineSpacing(2)
+                    .frame(maxWidth: 360)
+                    .lineSpacing(3)
             }
         }
         .frame(maxWidth: .infinity)
     }
 
+    // MARK: - Loading State
+    
     private var loadingState: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: TigerSpacing.md) {
             ProgressView()
-            Text("Checking in with Tiger Mom...")
-                .font(.system(size: 13, weight: .regular))
+                .scaleEffect(0.8)
+            Text("Connecting to Tiger Mom...")
+                .font(TigerTypography.bodySmall)
                 .foregroundColor(TigerPalette.textSecondary)
         }
         .frame(maxWidth: .infinity)
     }
 
+    // MARK: - Composer
+    
     private var composer: some View {
-        HStack(alignment: .bottom, spacing: 14) {
+        HStack(alignment: .bottom, spacing: TigerSpacing.md) {
             ZStack(alignment: .topLeading) {
                 TextEditor(text: $inputText)
                     .scrollContentBackground(.hidden)
-                    .font(.system(size: 15))
+                    .font(TigerTypography.body)
                     .foregroundColor(TigerPalette.textPrimary)
-                    .frame(minHeight: 68, maxHeight: 120)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 10)
+                    .frame(minHeight: 56, maxHeight: 100)
+                    .padding(.horizontal, TigerSpacing.lg)
+                    .padding(.vertical, TigerSpacing.md)
                     .background(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .fill(Color.white.opacity(0.04))
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(TigerPalette.backgroundTertiary)
                             .overlay(
-                                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                    .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .strokeBorder(TigerPalette.border, lineWidth: 1)
                             )
                     )
 
                 if inputText.isEmpty {
-                    Text("Ask Tiger Mom anything about your day...")
-                        .font(.system(size: 14, weight: .medium))
+                    Text("Ask Tiger Mom anything...")
+                        .font(TigerTypography.body)
                         .foregroundColor(TigerPalette.textMuted)
-                        .padding(.horizontal, 18)
-                        .padding(.vertical, 16)
+                        .padding(.horizontal, TigerSpacing.xl)
+                        .padding(.vertical, TigerSpacing.lg)
+                        .allowsHitTesting(false)
                 }
             }
 
-            VStack(spacing: 10) {
+            VStack(spacing: TigerSpacing.xs) {
                 Button {
                     Task { await sendMessage() }
                 } label: {
                     Image(systemName: "arrow.up")
-                        .font(.system(size: 15, weight: .bold))
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(canSend ? TigerPalette.background : TigerPalette.textMuted)
                         .frame(width: 42, height: 42)
+                        .background(
+                            Circle()
+                                .fill(canSend ? TigerPalette.gold : TigerPalette.surfaceHover)
+                        )
                 }
                 .buttonStyle(
                     TigerButtonStyle(
@@ -287,23 +295,34 @@ struct ChatView: View {
                 )
                 .disabled(!canSend)
                 .keyboardShortcut(.return, modifiers: [.command])
+                .animation(.tigerQuick, value: canSend)
 
-                Text("Cmd↩")
-                    .font(.system(size: 10, weight: .medium, design: .rounded))
+                Text("Cmd+Enter")
+                    .font(.system(size: 9, weight: .medium))
                     .foregroundColor(TigerPalette.textMuted)
             }
         }
     }
 
+    // MARK: - Context Rail
+    
     private var contextRail: some View {
-        VStack(spacing: 18) {
-            TigerPanel(padding: 20, cornerRadius: 24) {
-                VStack(alignment: .leading, spacing: 14) {
-                    TigerSectionHeader(
-                        eyebrow: "Today",
-                        title: "\(stats.focusScore) focus",
-                        detail: "A live snapshot behind the conversation."
-                    )
+        VStack(spacing: TigerSpacing.lg) {
+            // Today's stats
+            TigerPanel(padding: TigerSpacing.lg, cornerRadius: 14) {
+                VStack(alignment: .leading, spacing: TigerSpacing.md) {
+                    HStack {
+                        Text("TODAY")
+                            .font(TigerTypography.overline)
+                            .tracking(1)
+                            .foregroundColor(TigerPalette.textMuted)
+                        
+                        Spacer()
+                        
+                        Text("\(stats.focusScore)")
+                            .font(TigerTypography.title)
+                            .foregroundColor(TigerPalette.gold)
+                    }
 
                     chatStatRow(label: "Deep work", value: stats.deepWorkMinutes.tigerDuration, tint: TigerPalette.jade)
                     chatStatRow(label: "Distraction", value: stats.distractionMinutes.tigerDuration, tint: TigerPalette.coral)
@@ -312,17 +331,17 @@ struct ChatView: View {
                 }
             }
 
-            TigerPanel(padding: 20, cornerRadius: 24) {
-                VStack(alignment: .leading, spacing: 14) {
-                    TigerSectionHeader(
-                        eyebrow: "Presence",
-                        title: appState.isTracking ? "Tiger Mom is watching." : "Tracking is paused.",
-                        detail: "The interface reflects the app’s live local state."
-                    )
+            // Session info
+            TigerPanel(padding: TigerSpacing.lg, cornerRadius: 14) {
+                VStack(alignment: .leading, spacing: TigerSpacing.md) {
+                    Text("SESSION")
+                        .font(TigerTypography.overline)
+                        .tracking(1)
+                        .foregroundColor(TigerPalette.textMuted)
 
-                    sessionLine(label: "Tracking", value: appState.isTracking ? "On" : "Paused")
+                    sessionLine(label: "Tracking", value: appState.isTracking ? "Active" : "Paused")
                     sessionLine(label: "Idle", value: appState.isIdle ? "Yes" : "No")
-                    sessionLine(label: "Captures today", value: "\(appState.captureCountToday)")
+                    sessionLine(label: "Captures", value: "\(appState.captureCountToday)")
                     sessionLine(
                         label: "Last capture",
                         value: appState.lastCaptureTime?.formatted(date: .omitted, time: .shortened) ?? "None"
@@ -330,32 +349,36 @@ struct ChatView: View {
                 }
             }
 
-            TigerPanel(padding: 20, cornerRadius: 24) {
-                VStack(alignment: .leading, spacing: 12) {
-                    TigerSectionHeader(
-                        eyebrow: "Notes",
-                        title: "Conversation rules",
-                        detail: "Designed to feel natural while staying rooted in your local data."
-                    )
+            // Notes
+            TigerPanel(padding: TigerSpacing.lg, cornerRadius: 14) {
+                VStack(alignment: .leading, spacing: TigerSpacing.sm) {
+                    Text("NOTES")
+                        .font(TigerTypography.overline)
+                        .tracking(1)
+                        .foregroundColor(TigerPalette.textMuted)
 
                     Text(connectionStatus == .online
-                         ? "Tiger Mom can read recent tracked activity and saved history to respond with specifics."
-                         : "The sidecar looks offline. Start the backend to restore history, analytics, and live replies.")
-                        .font(.system(size: 13, weight: .medium))
+                         ? "Tiger Mom can read your tracked activity to respond with specifics."
+                         : "Start the backend to restore history and live replies.")
+                        .font(TigerTypography.caption)
                         .foregroundColor(TigerPalette.textSecondary)
-                        .lineSpacing(4)
-
-                    Text("Send with Command-Return.")
-                        .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .tracking(1.2)
-                        .foregroundColor(TigerPalette.textMuted)
+                        .lineSpacing(3)
                 }
             }
 
             Spacer()
+            
+            // Last updated
+            if let lastUpdatedAt {
+                Text("Updated \(lastUpdatedAt.formatted(date: .omitted, time: .shortened))")
+                    .font(TigerTypography.caption)
+                    .foregroundColor(TigerPalette.textMuted)
+            }
         }
     }
 
+    // MARK: - Helpers
+    
     private var canSend: Bool {
         !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !isSending
     }
@@ -365,30 +388,33 @@ struct ChatView: View {
         guard !text.isEmpty, !isSending else { return }
 
         let userMsg = ChatMessage(id: UUID().uuidString, content: text, isUser: true, timestamp: Date())
-        messages.append(userMsg)
+        withAnimation(.tigerSpring) {
+            messages.append(userMsg)
+        }
         inputText = ""
         isSending = true
-        statusMessage = "Tiger Mom is typing..."
 
         do {
             let response = try await APIClient.shared.chat(message: text)
             let reply = response["reply"] as? String ?? "..."
-            messages.append(ChatMessage(id: UUID().uuidString, content: reply, isUser: false, timestamp: Date()))
+            withAnimation(.tigerSpring) {
+                messages.append(ChatMessage(id: UUID().uuidString, content: reply, isUser: false, timestamp: Date()))
+            }
             connectionStatus = .online
             lastUpdatedAt = Date()
-            statusMessage = "A direct line into your local accountability layer."
             await loadStats()
         } catch {
             connectionStatus = .offline
-            statusMessage = "Backend unavailable. Start the sidecar to chat."
-            messages.append(
-                ChatMessage(
-                    id: UUID().uuidString,
-                    content: "Tiger Mom is unavailable right now. Make sure the backend is running.",
-                    isUser: false,
-                    timestamp: Date()
+            withAnimation(.tigerSpring) {
+                messages.append(
+                    ChatMessage(
+                        id: UUID().uuidString,
+                        content: "Tiger Mom is unavailable. Make sure the backend is running.",
+                        isUser: false,
+                        timestamp: Date()
+                    )
                 )
-            )
+            }
         }
 
         isSending = false
@@ -407,12 +433,8 @@ struct ChatView: View {
         do {
             _ = try await APIClient.shared.health()
             connectionStatus = .online
-            statusMessage = messages.isEmpty
-                ? "Tiger Mom is online and ready to judge with context."
-                : "Conversation synced with the local sidecar."
         } catch {
             connectionStatus = .offline
-            statusMessage = "Sidecar offline. Start the backend to load history and send messages."
         }
     }
 
@@ -450,16 +472,17 @@ struct ChatView: View {
     }
 
     private func startFreshChat() {
-        messages = []
+        withAnimation(.tigerSpring) {
+            messages = []
+        }
         inputText = ""
-        statusMessage = "Fresh local thread. Saved history still exists unless you clear app data."
     }
 
     private func scrollToBottom() {
         guard let proxy = scrollProxy else { return }
         let target = isSending ? "typing" : messages.last?.id
         if let target {
-            withAnimation(.easeOut(duration: 0.25)) {
+            withAnimation(.tigerSmooth) {
                 proxy.scrollTo(target, anchor: .bottom)
             }
         }
@@ -467,116 +490,185 @@ struct ChatView: View {
 
     private func chatStatRow(label: String, value: String, tint: Color) -> some View {
         HStack {
-            HStack(spacing: 8) {
+            HStack(spacing: TigerSpacing.sm) {
                 Circle()
                     .fill(tint)
-                    .frame(width: 8, height: 8)
+                    .frame(width: 6, height: 6)
                 Text(label)
-                    .font(.system(size: 13, weight: .regular))
+                    .font(TigerTypography.caption)
                     .foregroundColor(TigerPalette.textSecondary)
             }
 
             Spacer()
 
             Text(value)
-                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .font(TigerTypography.caption)
+                .fontWeight(.semibold)
                 .foregroundColor(TigerPalette.textPrimary)
         }
     }
 
     private func sessionLine(label: String, value: String) -> some View {
-        TigerLabeledValueRow(label: label, value: value)
+        HStack {
+            Text(label)
+                .font(TigerTypography.caption)
+                .foregroundColor(TigerPalette.textSecondary)
+            Spacer()
+            Text(value)
+                .font(TigerTypography.caption)
+                .fontWeight(.semibold)
+                .foregroundColor(TigerPalette.textPrimary)
+        }
     }
 }
 
+// MARK: - Prompt Pill
+
+struct PromptPill: View {
+    let text: String
+    let action: () -> Void
+    
+    @State private var isHovered = false
+    
+    var body: some View {
+        Button(action: action) {
+            Text(text)
+                .font(TigerTypography.caption)
+                .foregroundColor(TigerPalette.textPrimary)
+                .padding(.horizontal, TigerSpacing.md)
+                .padding(.vertical, TigerSpacing.sm)
+                .background(
+                    Capsule(style: .continuous)
+                        .fill(isHovered ? TigerPalette.surfaceHover : TigerPalette.backgroundTertiary)
+                        .overlay(
+                            Capsule(style: .continuous)
+                                .strokeBorder(TigerPalette.border, lineWidth: 1)
+                        )
+                )
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+        .animation(.tigerQuick, value: isHovered)
+    }
+}
+
+// MARK: - Message Bubble
+
 struct MessageBubble: View {
     let message: ChatMessage
+    
+    @State private var showTimestamp = false
 
     var body: some View {
-        HStack(alignment: .bottom, spacing: 12) {
+        HStack(alignment: .bottom, spacing: TigerSpacing.md) {
             if !message.isUser {
-                TigerInlineGlyph(size: 34)
+                TigerInlineGlyph(size: 28)
             }
 
-            VStack(alignment: message.isUser ? .trailing : .leading, spacing: 6) {
+            VStack(alignment: message.isUser ? .trailing : .leading, spacing: TigerSpacing.xs) {
                 Text(message.content)
-                    .font(.system(size: 15, weight: .regular))
+                    .font(TigerTypography.body)
                     .foregroundColor(message.isUser ? TigerPalette.background : TigerPalette.textPrimary)
-                    .lineSpacing(4)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 13)
+                    .lineSpacing(3)
+                    .padding(.horizontal, TigerSpacing.lg)
+                    .padding(.vertical, TigerSpacing.md)
                     .background(
                         Group {
                             if message.isUser {
-                                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                    .fill(TigerPalette.gold.opacity(0.24))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                            .strokeBorder(TigerPalette.gold.opacity(0.22), lineWidth: 1)
-                                    )
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .fill(TigerPalette.gold)
                             } else {
-                                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                    .fill(Color.white.opacity(0.045))
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .fill(TigerPalette.surface)
                                     .overlay(
-                                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                            .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
+                                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                            .strokeBorder(TigerPalette.border, lineWidth: 1)
                                     )
                             }
                         }
                     )
 
-                Text(message.timestamp.formatted(date: .omitted, time: .shortened))
-                    .font(.system(size: 10, weight: .medium, design: .rounded))
-                    .foregroundColor(TigerPalette.textMuted)
+                // Show timestamp on hover
+                if showTimestamp {
+                    Text(message.timestamp.formatted(date: .omitted, time: .shortened))
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(TigerPalette.textMuted)
+                        .transition(.opacity)
+                }
             }
-            .frame(maxWidth: 520, alignment: message.isUser ? .trailing : .leading)
+            .frame(maxWidth: 480, alignment: message.isUser ? .trailing : .leading)
+            .onHover { hovering in
+                withAnimation(.tigerQuick) {
+                    showTimestamp = hovering
+                }
+            }
         }
         .frame(maxWidth: .infinity, alignment: message.isUser ? .trailing : .leading)
     }
 }
 
+// MARK: - Connection Badge
+
 struct ConnectionBadge: View {
     let status: ChatConnectionStatus
 
     var body: some View {
-        TigerCapsuleBadge(title: status.label, symbol: status.symbol, tint: status.tint)
+        HStack(spacing: TigerSpacing.xs) {
+            Image(systemName: status.symbol)
+                .font(.system(size: 10, weight: .bold))
+            Text(status.label)
+                .font(TigerTypography.caption)
+        }
+        .foregroundColor(status.tint)
+        .padding(.horizontal, TigerSpacing.sm + 2)
+        .padding(.vertical, TigerSpacing.xs + 2)
+        .background(
+            Capsule(style: .continuous)
+                .fill(status.tint.opacity(0.12))
+                .overlay(
+                    Capsule(style: .continuous)
+                        .strokeBorder(status.tint.opacity(0.15), lineWidth: 1)
+                )
+        )
     }
 }
+
+// MARK: - Typing Indicator
 
 struct TypingIndicator: View {
     @State private var phase = 0.0
 
     var body: some View {
-        HStack(spacing: 12) {
-            TigerInlineGlyph(size: 34)
+        HStack(spacing: TigerSpacing.md) {
+            TigerInlineGlyph(size: 28)
 
-            HStack(spacing: 7) {
+            HStack(spacing: TigerSpacing.sm) {
                 ForEach(0..<3, id: \.self) { index in
                     Circle()
                         .fill(TigerPalette.textSecondary)
-                        .frame(width: 8, height: 8)
-                        .scaleEffect(phase == Double(index) ? 1.2 : 0.7)
-                        .opacity(phase == Double(index) ? 1 : 0.35)
+                        .frame(width: 6, height: 6)
+                        .scaleEffect(phase == Double(index) ? 1.3 : 0.7)
+                        .opacity(phase == Double(index) ? 1 : 0.4)
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
+            .padding(.horizontal, TigerSpacing.lg)
+            .padding(.vertical, TigerSpacing.md)
             .background(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(Color.white.opacity(0.045))
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(TigerPalette.surface)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .strokeBorder(TigerPalette.border, lineWidth: 1)
                     )
             )
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .task {
             while true {
-                withAnimation(.easeInOut(duration: 0.45)) {
+                withAnimation(.easeInOut(duration: 0.4)) {
                     phase = (phase + 1).truncatingRemainder(dividingBy: 3)
                 }
-                try? await Task.sleep(for: .milliseconds(450))
+                try? await Task.sleep(for: .milliseconds(400))
             }
         }
     }
