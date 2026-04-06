@@ -537,6 +537,78 @@ struct TigerSkeleton: View {
     }
 }
 
+// MARK: - Button Style (for .buttonStyle modifier)
+
+enum TigerButtonProminence {
+    case primary
+    case secondary
+    case quiet
+}
+
+struct TigerButtonStyle: ButtonStyle {
+    var tint: Color = TigerPalette.gold
+    var prominence: TigerButtonProminence = .secondary
+    var cornerRadius: CGFloat = 10
+    
+    @State private var isHovered = false
+    
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(TigerTypography.bodySmall)
+            .fontWeight(prominence == .primary ? .semibold : .medium)
+            .foregroundColor(foregroundColor)
+            .padding(.horizontal, TigerSpacing.lg)
+            .padding(.vertical, TigerSpacing.md)
+            .background(background)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .strokeBorder(borderColor, lineWidth: prominence == .quiet ? 0 : 1)
+            )
+            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
+            .animation(.tigerQuick, value: configuration.isPressed)
+            .onHover { isHovered = $0 }
+    }
+    
+    private var foregroundColor: Color {
+        switch prominence {
+        case .primary:
+            return TigerPalette.background
+        case .secondary:
+            return tint
+        case .quiet:
+            return TigerPalette.textSecondary
+        }
+    }
+    
+    private var background: some View {
+        Group {
+            switch prominence {
+            case .primary:
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .fill(tint)
+            case .secondary:
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .fill(tint.opacity(0.12))
+            case .quiet:
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .fill(isHovered ? TigerPalette.surfaceHover : .clear)
+            }
+        }
+    }
+    
+    private var borderColor: Color {
+        switch prominence {
+        case .primary:
+            return .clear
+        case .secondary:
+            return tint.opacity(0.2)
+        case .quiet:
+            return TigerPalette.border
+        }
+    }
+}
+
 // MARK: - Primary Button
 
 struct TigerPrimaryButton: View {
